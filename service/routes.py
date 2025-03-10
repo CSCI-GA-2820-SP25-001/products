@@ -43,4 +43,61 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
+
+######################################################################
+# CREATE A NEW PRODUCT
+######################################################################
+@app.route("/products", methods=["POST"])
+def create_product():
+    """
+    Create a Product
+    This endpoint will create a Product based on the data in the body that is posted
+    """
+    app.logger.info("Request to Create a Product...")
+    check_content_type("application/json")
+
+    product = Product()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    product.deserialize(data)
+
+    # Save the new Product to the database
+    product.create()
+    app.logger.info("Product with new id [%s] saved!", product.id)
+
+    ### todo - uncomment this code when get account is implemented
+    # Return the location of the new Product
+    # location_url = url_for("get_product", product_id=product.id, _external=True)
+
+    return (jsonify(product.serialize()), status.HTTP_201_CREATED)
+
+
+# todo - {"Location": location_url} << we have to addd this later
+
+
+######################################################################
+#  U T I L I T Y   F U N C T I O N S
+######################################################################
+
+
+######################################################################
+# Checks the ContentType of a request
+######################################################################
+def check_content_type(content_type) -> None:
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
+    )
