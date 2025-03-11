@@ -73,3 +73,15 @@ class TestYourResourceService(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     # Todo: Add your test cases here...
+
+    # ----------------------------------------------------------
+    # TEST ALL PRODUCTS
+    # ----------------------------------------------------------
+    def test_get_all_products(self):
+        """It should all get all products"""
+        # get the id of a pet
+        test_pet = self._create_pets(1)[0]
+        response = self.client.get(f"{BASE_URL}/{test_pet.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], test_pet.name)

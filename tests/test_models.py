@@ -15,7 +15,7 @@
 ######################################################################
 
 """
-Test cases for Pet Model
+Test cases for products Model
 """
 
 # pylint: disable=duplicate-code
@@ -25,6 +25,10 @@ from unittest import TestCase
 from wsgi import app
 from service.models import Product, DataValidationError, db
 from .factories import ProductFactory
+import status
+
+BASE_URL = "/products"
+
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -76,3 +80,18 @@ class TestProduct(TestCase):
         self.assertEqual(data.name, product.name)
         self.assertEqual(data.description, product.description)
         self.assertEqual(data.price, product.price)
+
+    ######################################################################
+    #  TEST ALL PRODUCTS
+    ######################################################################
+
+    def test_get_all_products(self):
+        """It should get all products"""
+        # get the id of a products
+        test_all_products = self._create_products(1)[0]
+        response = self.client.get(f"{BASE_URL}/{test_all_products.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], test_all_products.name)
+
+    

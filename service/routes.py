@@ -44,3 +44,41 @@ def index():
 ######################################################################
 
 # Todo: Place your REST API code here ...
+
+######################################################################
+# LIST ALL PRODUCTS
+######################################################################
+@app.route("/products", methods=["GET"])
+def get_all_products():
+    """Returns all of the products"""
+    app.logger.info("Request for products list")
+
+    products = []
+
+    # Parse any arguments from the query string
+    id = request.args.get("id")
+    name = request.args.get("name")
+    description = request.args.get("description")
+    price = request.args.get("price")
+
+    if id:
+        app.logger.info("Find by id: %d", int(id))
+        products = products.find_by_products(category)
+    elif name:
+        app.logger.info("Find by name: %s", name)
+        products = products.find_by_name(name)
+    elif description:
+        products = products.find_by_description(description)
+    elif price:
+        app.logger.info("Find by price: %f", float(price))
+        products = products.find_by_price(price)
+    else:
+        app.logger.info("Find all")
+        products = products.all()
+
+    results = [products.serialize() for products in products]
+    app.logger.info("Returning %d products", len(results))
+    return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
