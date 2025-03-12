@@ -22,6 +22,8 @@ TestProduct API Service Test Suite
 import os
 import logging
 from unittest import TestCase
+from unittest.mock import patch, MagicMock
+from urllib.parse import quote_plus
 from wsgi import app
 from service.common import status
 from service.models import db, Product
@@ -74,6 +76,10 @@ class TestProductService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertIsNotNone(data)
+        self.assertEqual(data["name"], "Product Demo REST API Service")
 
     # ----------------------------------------------------------
     # TEST CREATE PRODUCT
