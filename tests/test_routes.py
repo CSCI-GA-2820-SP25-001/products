@@ -77,11 +77,14 @@ class TestYourResourceService(TestCase):
     # ----------------------------------------------------------
     # TEST ALL PRODUCTS
     # ----------------------------------------------------------
-    def test_get_all_products(self):
-        """It should all get all products"""
-        # get the id of a pet
-        test_pet = self._create_pets(1)[0]
-        response = self.client.get(f"{BASE_URL}/{test_pet.id}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.get_json()
-        self.assertEqual(data["name"], test_pet.name)
+# ----------------------------------------------------------
+# TEST LIST
+# ----------------------------------------------------------
+def test_get_product_list(self):
+    """It should Get a list of Products"""
+    self._create_products(5)  # Ensure a helper function exists for creating test products
+    response = self.client.get(BASE_URL)  # Ensure BASE_URL is correctly set for products
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+    
+    data = response.get_json()
+    self.assertEqual(len(data), 5)
