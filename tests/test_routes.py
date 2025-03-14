@@ -95,6 +95,27 @@ class TestProductService(TestCase):
         self.assertEqual(new_product["name"], test_product.name)
         self.assertEqual(new_product["description"], test_product.description)
         self.assertEqual(str(new_product["price"]), str(test_product.price))
+    
+
+    # ----------------------------------------------------------
+    # TEST UPDATE
+    # ----------------------------------------------------------
+    def test_update_product(self):
+        """It should Update an existing Product"""
+        # create a product to update
+        test_product = ProductFactory()
+        response = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # update the product
+        new_product = response.get_json()
+        logging.debug(new_product)
+        new_product["description"] = "test description"
+        response = self.client.put(f"{BASE_URL}/{new_product['id']}", json=new_product)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_product = response.get_json()
+        self.assertEqual(updated_product["category"], "test description")
+
 
 
 ### todo - uncomment this code when get account is implemented
@@ -108,3 +129,5 @@ class TestProductService(TestCase):
 
 
 # Todo: Add your test cases here...
+
+    
