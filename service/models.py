@@ -30,7 +30,9 @@ class Product(db.Model):
     description = db.Column(db.String(256))
     price = db.Column(db.Numeric(10, 2))
 
-    # Todo: Place the rest of your schema here...
+    ##################################################
+    # INSTANCE METHODS
+    ##################################################
 
     def __repr__(self):
         return f"<Product {self.name} id=[{self.id}]>"

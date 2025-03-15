@@ -15,24 +15,27 @@
 ######################################################################
 
 """
-Test cases for products Model
+Test cases for product Model
 """
 
 # pylint: disable=duplicate-code
 import os
 import logging
 from unittest import TestCase
+
+
 from wsgi import app
+
+
+from service.common import status
 from service.models import Product, DataValidationError, db
-from .factories import ProductFactory
-import status
-
-BASE_URL = "/products"
-
+from tests.factories import ProductFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
+
+BASE_URL = "/products"
 
 
 ######################################################################
@@ -81,17 +84,14 @@ class TestProduct(TestCase):
         self.assertEqual(data.description, product.description)
         self.assertEqual(data.price, product.price)
 
-    ######################################################################
-    #  TEST ALL PRODUCTS
-    ######################################################################
-
-    def test_get_all_products(self):
-        """It should get all products"""
-        # get the id of a products
-        test_all_products = self._create_products(1)[0]
-        response = self.client.get(f"{BASE_URL}/{test_all_products.id}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        data = response.get_json()
-        self.assertEqual(data["name"], test_all_products.name)
-
-    
+    def test_list_all_products(self):
+        """It should List all products in the database"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        # Create 5 products
+        for _ in range(5):
+            product = ProductFactory()
+            product.create()
+        # See if we get back 5 products
+        products = Product.all()
+        self.assertEqual(len(products), 5)

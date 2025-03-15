@@ -43,13 +43,12 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
 
 ######################################################################
 # LIST ALL PRODUCTS
 ######################################################################
 @app.route("/products", methods=["GET"])
-def get_all_products():
+def list_products():
     """Returns all of the products"""
     app.logger.info("Request for products list")
 
@@ -63,18 +62,18 @@ def get_all_products():
 
     if id:
         app.logger.info("Find by id: %d", int(id))
-        products = products.find_by_products(category)
+        products = Product.find_by_id(id)
     elif name:
         app.logger.info("Find by name: %s", name)
-        products = products.find_by_name(name)
+        products = Product.find_by_name(name)
     elif description:
-        products = products.find_by_description(description)
+        products = Product.find_by_description(description)
     elif price:
         app.logger.info("Find by price: %f", float(price))
-        products = products.find_by_price(price)
+        products = Product.find_by_price(price)
     else:
         app.logger.info("Find all")
-        products = products.all()
+        products = Product.all()
 
     results = [products.serialize() for products in products]
     app.logger.info("Returning %d products", len(results))
