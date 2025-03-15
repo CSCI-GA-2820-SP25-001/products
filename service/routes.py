@@ -33,8 +33,13 @@ from service.common import status  # HTTP Status Codes
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "Reminder: return some useful information in json format about the service here",
+        jsonify(
+            name="Product Demo REST API Service",
+            version="1.0",
+            paths=url_for("list_products", _external=True),
+        ),
         status.HTTP_200_OK,
     )
 
@@ -66,7 +71,7 @@ def create_product():
     product.create()
     app.logger.info("Product with new id [%s] saved!", product.id)
 
-    ### todo - uncomment this code when get account is implemented
+    # todo - uncomment this code when get account is implemented
     # Return the location of the new Product
     # location_url = url_for("get_product", product_id=product.id, _external=True)
 
@@ -104,8 +109,57 @@ def update_product(product_id):
 
 
 ######################################################################
+# READ A PET
+######################################################################
+@app.route("/products/<int:product_id>", methods=["GET"])
+def get_products(product_id):
+    """
+    Retrieve a single Product
+
+    This endpoint will return a Product based on it's id
+    """
+    app.logger.info("Request to Retrieve a product with id [%s]", product_id)
+
+    # Attempt to find the Product and abort if not found
+    product = Product.find(product_id)
+    if not product:
+        abort(
+            status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found."
+        )
+
+    app.logger.info("Returning product: %s", product.name)
+    return jsonify(product.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# DELETE A PET
+######################################################################
+@app.route("/products/<int:product_id>", methods=["DELETE"])
+def delete_products(product_id):
+    """
+    Delete a Product
+
+    This endpoint will delete a Product based the id specified in the path
+    """
+    app.logger.info("Request to Delete a product with id [%s]", product_id)
+
+    # Delete the Product if it exists
+    product = Product.find(product_id)
+    if product:
+        app.logger.info("Product with ID: %d found.", product.id)
+        product.delete()
+
+    app.logger.info("Product with ID: %d delete complete.", product_id)
+    return {}, status.HTTP_204_NO_CONTENT
+
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
+def error(status_code, reason):
+    """Logs the error and then aborts"""
+    app.logger.error(reason)
+    abort(status_code, reason)
 
 
 ######################################################################
