@@ -96,15 +96,73 @@ class TestProductService(TestCase):
         self.assertEqual(new_product["description"], test_product.description)
         self.assertEqual(str(new_product["price"]), str(test_product.price))
 
+    ############################################################
+    # Utility function to bulk create products
+    ############################################################
+    def _create_products(self, count: int = 1) -> list:
+        """Factory method to create products in bulk"""
+        products = []
+        for _ in range(count):
+            test_product = ProductFactory()
+            response = self.client.post(BASE_URL, json=test_product.serialize())
+            self.assertEqual(
+                response.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test product",
+            )
+            new_product = response.get_json()
+            test_product.id = new_product["id"]
+            products.append(test_product)
+        return products
 
-### todo - uncomment this code when get account is implemented
-# Check that the location header was correct
-# response = self.client.get(location)
-# self.assertEqual(response.status_code, status.HTTP_200_OK)
-# new_product = response.get_json()
-# self.assertEqual(new_product["name"], test_product.name)
-# self.assertEqual(new_product["description"], test_product.description)
-# self.assertEqual(new_product["price"], test_product.price)
+    ### todo - uncomment this code when get account is implemented
+    # Check that the location header was correct
+    # response = self.client.get(location)
+    # self.assertEqual(response.status_code, status.HTTP_200_OK)
+    # new_product = response.get_json()
+    # self.assertEqual(new_product["name"], test_product.name)
+    # self.assertEqual(new_product["description"], test_product.description)
+    # self.assertEqual(new_product["price"], test_product.price)
 
+    # Todo: Add your test cases here...
 
-# Todo: Add your test cases here...
+    # ----------------------------------------------------------
+    # TEST READ
+    # ----------------------------------------------------------
+    def test_get_product(self):
+        """It should Get a single Product"""
+        # get the id of a product
+        test_product = self._create_products(1)[0]
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data["name"], test_product.name)
+
+    def test_get_product_not_found(self):
+        """It should not Get a Product thats not found"""
+        response = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        data = response.get_json()
+        logging.debug("Response data = %s", data)
+        self.assertIn("was not found", data["message"])
+
+    # ----------------------------------------------------------
+    # TEST DELETE
+    # ----------------------------------------------------------
+    def test_delete_product(self):
+        """It should Delete a Product"""
+        test_product = self._create_products(1)[0]
+        print(test_product)
+        print(test_product.id)
+        response = self.client.delete(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
+        # make sure they are deleted
+        response = self.client.get(f"{BASE_URL}/{test_product.id}")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_non_existing_product(self):
+        """It should Delete a Product even if it doesn't exist"""
+        response = self.client.delete(f"{BASE_URL}/0")
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data), 0)
