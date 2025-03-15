@@ -101,7 +101,6 @@ class TestProductService(TestCase):
         self.assertEqual(new_product["name"], test_product.name)
         self.assertEqual(new_product["description"], test_product.description)
         self.assertEqual(str(new_product["price"]), str(test_product.price))
-    
 
     # ----------------------------------------------------------
     # TEST UPDATE
@@ -120,8 +119,7 @@ class TestProductService(TestCase):
         response = self.client.put(f"{BASE_URL}/{new_product['id']}", json=new_product)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_product = response.get_json()
-        self.assertEqual(updated_product["category"], "test description")
-
+        self.assertEqual(updated_product["description"], "test description")
 
     ############################################################
     # Utility function to bulk create products
@@ -172,7 +170,7 @@ class TestProductService(TestCase):
         data = response.get_json()
         logging.debug("Response data = %s", data)
         self.assertIn("was not found", data["message"])
-  
+
     # ----------------------------------------------------------
     # TEST DELETE
     # ----------------------------------------------------------
@@ -193,4 +191,3 @@ class TestProductService(TestCase):
         response = self.client.delete(f"{BASE_URL}/0")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(response.data), 0)
-     
