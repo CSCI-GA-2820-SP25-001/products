@@ -60,6 +60,121 @@ tests/                     - test cases package
 └── test_routes.py         - test suite for service routes
 ```
 
+# Product Management Service
+
+## Overview
+This service provides a RESTful API for managing product information. It allows users to create, read, update, and delete product records through HTTP endpoints.
+
+## Setup Instructions
+
+### Prerequisites
+- Python 3.8 or higher
+- Docker (optional)
+- PostgreSQL (if running locally)
+
+### Local Development Setup
+1. Clone the repository
+```bash
+git clone <repository-url>
+cd <project-directory>
+```
+
+2. Create and activate a virtual environment
+```bash
+python -m venv venv
+source venv/bin/activate  # For Unix/macOS
+.\venv\Scripts\activate  # For Windows
+```
+
+3. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+4. Set up environment variables
+Create a `.env` file in the root directory:
+
+DATABASE_URI=postgresql://postgres:postgres@localhost:5432/products
+PORT=8000
+
+
+5. Initialize the database
+```bash
+python manage.py db init
+python manage.py db migrate
+python manage.py db upgrade
+```
+
+### Docker Setup
+```bash
+docker-compose up -d
+```
+
+## API Reference
+
+### Products API
+
+#### Get Product by ID
+```http
+GET /api/products/{id}
+```
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | `integer` | Product ID |
+
+Response Example:
+```json
+{
+    "id": 1,
+    "name": "Sample Product",
+    "status_code": 200
+}
+```
+
+#### Get All Products
+```http
+GET /api/products
+```
+Returns a list of all products in the database.
+
+Response Example:
+```json
+{
+    "products": [
+        {
+            "id": 1,
+            "name": "Sample Product 1"
+        },
+        {
+            "id": 2,
+            "name": "Sample Product 2"
+        }
+    ],
+    "status_code": 200
+}
+```
+
+### Error Responses
+
+```json
+{
+    "error": "Product not found",
+    "status_code": 404
+}
+```
+
+## Testing
+Run the test suite:
+```bash
+python -m pytest
+```
+
+## Deployment
+The application can be deployed using:
+- Docker containers
+- Kubernetes cluster
+- Cloud platforms (AWS, GCP, Azure)
+
 ## License
 
 Copyright (c) 2016, 2025 [John Rofrano](https://www.linkedin.com/in/JohnRofrano/). All rights reserved.
@@ -67,3 +182,4 @@ Copyright (c) 2016, 2025 [John Rofrano](https://www.linkedin.com/in/JohnRofrano/
 Licensed under the Apache License. See [LICENSE](LICENSE)
 
 This repository is part of the New York University (NYU) masters class: **CSCI-GA.2820-001 DevOps and Agile Methodologies** created and taught by [John Rofrano](https://cs.nyu.edu/~rofrano/), Adjunct Instructor, NYU Courant Institute, Graduate Division, Computer Science, and NYU Stern School of Business.
+

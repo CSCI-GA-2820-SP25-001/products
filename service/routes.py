@@ -33,8 +33,13 @@ from service.common import status  # HTTP Status Codes
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "Reminder: return some useful information in json format about the service here",
+        jsonify(
+            name="Product Demo REST API Service",
+            version="1.0",
+            paths=url_for("list_products", _external=True),
+        ),
         status.HTTP_200_OK,
     )
 
@@ -44,6 +49,110 @@ def index():
 ######################################################################
 
 
+######################################################################
+# CREATE A NEW PRODUCT
+######################################################################
+@app.route("/products", methods=["POST"])
+def create_product():
+    """
+    Create a Product
+    This endpoint will create a Product based on the data in the body that is posted
+    """
+    app.logger.info("Request to Create a Product...")
+    check_content_type("application/json")
+
+    product = Product()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    product.deserialize(data)
+
+    # Save the new Product to the database
+    product.create()
+    app.logger.info("Product with new id [%s] saved!", product.id)
+
+    # todo - uncomment this code when get account is implemented
+    # Return the location of the new Product
+    # location_url = url_for("get_product", product_id=product.id, _external=True)
+
+    return (jsonify(product.serialize()), status.HTTP_201_CREATED)
+
+
+# todo - {"Location": location_url} << we have to addd this later
+
+
+@app.route("/products/<int:product_id>", methods=["PUT"])
+def update_product(product_id):
+    """
+    Update a Product
+
+    This endpoint will update a Product based the body that is posted
+    """
+    app.logger.info("Request to Update a product with id [%s]", product_id)
+    check_content_type("application/json")
+
+    # Attempt to find the Product and abort if not found
+    product = Product.find(product_id)
+    if not product:
+        abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
+
+    # Update the Product with the new data
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
+    product.deserialize(data)
+
+    # Save the updates to the database
+    product.update()
+
+    app.logger.info("Product with ID: %d updated.", product.id)
+    return jsonify(product.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# READ A PRODUCT
+######################################################################
+@app.route("/products/<int:product_id>", methods=["GET"])
+def get_products(product_id):
+    """
+    Retrieve a single Product
+
+    This endpoint will return a Product based on it's id
+    """
+    app.logger.info("Request to Retrieve a product with id [%s]", product_id)
+
+    # Attempt to find the Product and abort if not found
+    product = Product.find(product_id)
+    if not product:
+        abort(
+            status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found."
+        )
+
+    app.logger.info("Returning product: %s", product.name)
+    return jsonify(product.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# DELETE A PRODUCT
+######################################################################
+@app.route("/products/<int:product_id>", methods=["DELETE"])
+def delete_products(product_id):
+    """
+    Delete a Product
+
+    This endpoint will delete a Product based the id specified in the path
+    """
+    app.logger.info("Request to Delete a product with id [%s]", product_id)
+
+    # Delete the Product if it exists
+    product = Product.find(product_id)
+    if product:
+        app.logger.info("Product with ID: %d found.", product.id)
+        product.delete()
+
+    app.logger.info("Product with ID: %d delete complete.", product_id)
+    return {}, status.HTTP_204_NO_CONTENT
+
+  
 ######################################################################
 # LIST ALL PRODUCTS
 ######################################################################
@@ -78,6 +187,35 @@ def list_products():
     results = [products.serialize() for products in products]
     app.logger.info("Returning %d products", len(results))
     return jsonify(results), status.HTTP_200_OK
+  
+
+######################################################################
+#  U T I L I T Y   F U N C T I O N S
+######################################################################
+def error(status_code, reason):
+    """Logs the error and then aborts"""
+    app.logger.error(reason)
+    abort(status_code, reason)
+
 
 
 ######################################################################
+# Checks the ContentType of a request
+######################################################################
+def check_content_type(content_type) -> None:
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+        f"Content-Type must be {content_type}",
+    )
