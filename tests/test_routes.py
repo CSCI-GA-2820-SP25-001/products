@@ -65,29 +65,18 @@ class TestProductService(TestCase):
         """This runs after each test"""
         db.session.remove()
 
-    ######################################################################
-    #  P L A C E   T E S T   C A S E S   H E R E
-    ######################################################################
-
     def test_index(self):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
-    # Todo: Add your test cases here...
-
     # ----------------------------------------------------------
-    # TEST ALL PRODUCTS
+    # TEST LIST
     # ----------------------------------------------------------
-
-
-# ----------------------------------------------------------
-# TEST LIST
-# ----------------------------------------------------------
-def test_get_product_list(self):
-    """It should Get a list of Products"""
-    self._create_products(5)
-    response = self.client.get(BASE_URL)
-    self.assertEqual(response.status_code, status.HTTP_200_OK)
-    data = response.get_json()
-    self.assertEqual(len(data), 5)
+    def test_get_product_list(self):
+        """It should Get a list of Products"""
+        self._create_products(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
