@@ -67,7 +67,7 @@ class TestProductService(TestCase):
     def tearDown(self):
         """This runs after each test"""
         db.session.remove()
-
+        
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -76,10 +76,6 @@ class TestProductService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-        data = resp.get_json()
-        self.assertIsNotNone(data)
-        self.assertEqual(data["name"], "Product Demo REST API Service")
 
     # ----------------------------------------------------------
     # TEST CREATE PRODUCT
@@ -191,3 +187,18 @@ class TestProductService(TestCase):
         response = self.client.delete(f"{BASE_URL}/0")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(response.data), 0)
+
+    # ----------------------------------------------------------
+    # TEST LIST
+    # ----------------------------------------------------------
+    def test_get_product_list(self):
+        """It should Get a list of Products"""
+        self._create_products(5)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 5)
+
+        data = resp.get_json()
+        self.assertIsNotNone(data)
+        self.assertEqual(data["name"], "Product Demo REST API Service")

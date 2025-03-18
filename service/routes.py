@@ -109,7 +109,7 @@ def update_product(product_id):
 
 
 ######################################################################
-# READ A PET
+# READ A PRODUCT
 ######################################################################
 @app.route("/products/<int:product_id>", methods=["GET"])
 def get_products(product_id):
@@ -132,7 +132,7 @@ def get_products(product_id):
 
 
 ######################################################################
-# DELETE A PET
+# DELETE A PRODUCT
 ######################################################################
 @app.route("/products/<int:product_id>", methods=["DELETE"])
 def delete_products(product_id):
@@ -152,6 +152,42 @@ def delete_products(product_id):
     app.logger.info("Product with ID: %d delete complete.", product_id)
     return {}, status.HTTP_204_NO_CONTENT
 
+  
+######################################################################
+# LIST ALL PRODUCTS
+######################################################################
+@app.route("/products", methods=["GET"])
+def list_products():
+    """Returns all of the products"""
+    app.logger.info("Request for products list")
+
+    products = []
+
+    # Parse any arguments from the query string
+    id = request.args.get("id")
+    name = request.args.get("name")
+    description = request.args.get("description")
+    price = request.args.get("price")
+
+    if id:
+        app.logger.info("Find by id: %d", int(id))
+        products = Product.find_by_id(id)
+    elif name:
+        app.logger.info("Find by name: %s", name)
+        products = Product.find_by_name(name)
+    elif description:
+        products = Product.find_by_description(description)
+    elif price:
+        app.logger.info("Find by price: %f", float(price))
+        products = Product.find_by_price(price)
+    else:
+        app.logger.info("Find all")
+        products = Product.all()
+
+    results = [products.serialize() for products in products]
+    app.logger.info("Returning %d products", len(results))
+    return jsonify(results), status.HTTP_200_OK
+  
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
@@ -160,6 +196,7 @@ def error(status_code, reason):
     """Logs the error and then aborts"""
     app.logger.error(reason)
     abort(status_code, reason)
+
 
 
 ######################################################################
