@@ -132,3 +132,29 @@ class Product(db.Model):
         """
         logger.info("Processing name query for %s ...", name)
         return cls.query.filter(cls.name == name)
+
+    @classmethod
+    def find_by_price(cls, price):
+        """Returns all Products with the given price
+
+        Args:
+            price (float): the price of the Products you want to match
+
+        Returns:
+            list[Product]: a collection of Products with that price
+        """
+        logger.info("Processing price query for %s", price)
+        return cls.query.filter(cls.price == price).all()
+
+    @classmethod
+    def find_by_description(cls, description):
+        """Returns all Products with the given description
+
+        Args:
+            description (string): the description of the Products you want to match
+
+        Returns:
+            list[Product]: a collection of Products with that description
+        """
+        logger.info("Processing price query for %s", description)
+        return cls.query.filter(cls.description == description).all()

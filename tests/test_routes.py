@@ -67,7 +67,7 @@ class TestProductService(TestCase):
     def tearDown(self):
         """This runs after each test"""
         db.session.remove()
-        
+
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
@@ -76,46 +76,6 @@ class TestProductService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-
-    # ----------------------------------------------------------
-    # TEST CREATE PRODUCT
-    # ----------------------------------------------------------
-    def test_create_product(self):
-        """It should Create a new Product"""
-        test_product = ProductFactory()
-        logging.debug("Test Product: %s", test_product.serialize())
-        response = self.client.post(BASE_URL, json=test_product.serialize())
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        ### todo - uncomment this code when get account is implemented
-        # Make sure location header is set
-        # location = response.headers.get("Location", None)
-        # self.assertIsNotNone(location)
-
-        # Check the data is correct
-        new_product = response.get_json()
-        self.assertEqual(new_product["name"], test_product.name)
-        self.assertEqual(new_product["description"], test_product.description)
-        self.assertEqual(str(new_product["price"]), str(test_product.price))
-
-    # ----------------------------------------------------------
-    # TEST UPDATE
-    # ----------------------------------------------------------
-    def test_update_product(self):
-        """It should Update an existing Product"""
-        # create a product to update
-        test_product = ProductFactory()
-        response = self.client.post(BASE_URL, json=test_product.serialize())
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-        # update the product
-        new_product = response.get_json()
-        logging.debug(new_product)
-        new_product["description"] = "test description"
-        response = self.client.put(f"{BASE_URL}/{new_product['id']}", json=new_product)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        updated_product = response.get_json()
-        self.assertEqual(updated_product["description"], "test description")
 
     ############################################################
     # Utility function to bulk create products
@@ -136,16 +96,74 @@ class TestProductService(TestCase):
             products.append(test_product)
         return products
 
-    ### todo - uncomment this code when get account is implemented
-    # Check that the location header was correct
-    # response = self.client.get(location)
-    # self.assertEqual(response.status_code, status.HTTP_200_OK)
-    # new_product = response.get_json()
-    # self.assertEqual(new_product["name"], test_product.name)
-    # self.assertEqual(new_product["description"], test_product.description)
-    # self.assertEqual(new_product["price"], test_product.price)
+    # ----------------------------------------------------------
+    # TEST CREATE PRODUCT
+    # ----------------------------------------------------------
+    def test_create_product(self):
+        """It should Create a new Product"""
+        test_product = ProductFactory()
+        logging.debug("Test Product: %s", test_product.serialize())
+        response = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-    # Todo: Add your test cases here...
+        # Check the data is correct
+        new_product = response.get_json()
+        self.assertEqual(new_product["name"], test_product.name)
+        self.assertEqual(new_product["description"], test_product.description)
+        self.assertEqual(str(new_product["price"]), str(test_product.price))
+
+    def test_create_with_bad_request(self):
+        """It should not Create when sending the wrong data"""
+        response = self.client.post(BASE_URL, json={"name": "not enough data"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_unsupported_media_type(self):
+        """It should not Create when sending wrong media type"""
+        product = ProductFactory()
+        response = self.client.post(
+            BASE_URL, json=product.serialize(), content_type="test/html"
+        )
+        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_wrong_content_type(self):
+        """It should return a 415 unsupported media type"""
+        headers = {"Content-Type": "text/plain"}
+        resp = self.client.post(
+            "/products", data="product_status=pending", headers=headers
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_no_content_type(self):
+        """It should return a 415 unsupported media type"""
+        resp = self.client.post("/products", data="product_status=pending")
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    # ----------------------------------------------------------
+    # TEST UPDATE
+    # ----------------------------------------------------------
+    def test_update_product(self):
+        """It should Update an existing Product"""
+        test_product = ProductFactory()
+        response = self.client.post(BASE_URL, json=test_product.serialize())
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # update the product
+        new_product = response.get_json()
+        logging.debug(new_product)
+        new_product["description"] = "test description"
+        response = self.client.put(f"{BASE_URL}/{new_product['id']}", json=new_product)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_product = response.get_json()
+        self.assertEqual(updated_product["description"], "test description")
+
+    def test_update_product_with_invalid_data(self):
+        """It should not Update a Product with invalid data"""
+        test_product = self._create_products(1)[0]
+        # Try updating with invalid data
+        invalid_data = test_product.serialize()
+        invalid_data["price"] = "not a number"
+        response = self.client.put(f"{BASE_URL}/{test_product.id}", json=invalid_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     # ----------------------------------------------------------
     # TEST READ
@@ -188,6 +206,11 @@ class TestProductService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(len(response.data), 0)
 
+    def test_method_not_allowed(self):
+        """It should not allow an illegal method call"""
+        resp = self.client.put(BASE_URL, json={"not": "allowed"})
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
     # ----------------------------------------------------------
     # TEST LIST
     # ----------------------------------------------------------
@@ -199,6 +222,32 @@ class TestProductService(TestCase):
         data = response.get_json()
         self.assertEqual(len(data), 5)
 
-        data = resp.get_json()
-        self.assertIsNotNone(data)
-        self.assertEqual(data["name"], "Product Demo REST API Service")
+    def test_get_product_list_by_name(self):
+        """It should Get a list of Products by name"""
+        products = self._create_products(5)
+        name = products[0].name
+        response = self.client.get(f"{BASE_URL}?name={quote_plus(name)}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertGreaterEqual(len(data), 1)
+        self.assertEqual(data[0]["name"], name)
+
+    def test_get_product_list_by_description(self):
+        """It should Get a list of Products by description"""
+        products = self._create_products(5)
+        description = products[0].description
+        response = self.client.get(f"{BASE_URL}?description={quote_plus(description)}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertGreaterEqual(len(data), 1)
+        self.assertEqual(data[0]["description"], description)
+
+    def test_get_product_list_by_category(self):
+        """It should Get a list of Products by price"""
+        products = self._create_products(5)
+        price = products[0].price
+        response = self.client.get(f"{BASE_URL}?price={str(price)}")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertGreaterEqual(len(data), 1)
+        self.assertEqual(float(data[0]["price"]), float(price))

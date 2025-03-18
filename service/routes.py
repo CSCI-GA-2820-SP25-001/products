@@ -94,7 +94,9 @@ def update_product(product_id):
     # Attempt to find the Product and abort if not found
     product = Product.find(product_id)
     if not product:
-        abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
+        abort(
+            status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found."
+        )
 
     # Update the Product with the new data
     data = request.get_json()
@@ -152,7 +154,7 @@ def delete_products(product_id):
     app.logger.info("Product with ID: %d delete complete.", product_id)
     return {}, status.HTTP_204_NO_CONTENT
 
-  
+
 ######################################################################
 # LIST ALL PRODUCTS
 ######################################################################
@@ -179,7 +181,7 @@ def list_products():
         products = Product.find_by_description(description)
     elif price:
         app.logger.info("Find by price: %f", float(price))
-        products = Product.find_by_price(price)
+        products = Product.find_by_price(float(price))
     else:
         app.logger.info("Find all")
         products = Product.all()
@@ -187,7 +189,7 @@ def list_products():
     results = [products.serialize() for products in products]
     app.logger.info("Returning %d products", len(results))
     return jsonify(results), status.HTTP_200_OK
-  
+
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
@@ -196,7 +198,6 @@ def error(status_code, reason):
     """Logs the error and then aborts"""
     app.logger.error(reason)
     abort(status_code, reason)
-
 
 
 ######################################################################

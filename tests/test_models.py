@@ -28,6 +28,7 @@ from wsgi import app
 
 
 from service.common import status
+from unittest.mock import patch
 from service.models import Product, DataValidationError, db
 from tests.factories import ProductFactory
 
@@ -72,6 +73,7 @@ class TestProduct(TestCase):
     #  T E S T   C A S E S
     ######################################################################
 
+    # Create
     def test_create_product(self):
         """It should create a Product"""
         product = ProductFactory()
@@ -84,14 +86,163 @@ class TestProduct(TestCase):
         self.assertEqual(data.description, product.description)
         self.assertEqual(data.price, product.price)
 
+    def test_create_a_product(self):
+        """It should Create a Product and assert that it exists"""
+        product = Product(
+            name="Headphone", description="Noise cancelling", price=100.00
+        )
+        self.assertTrue(product is not None)
+        self.assertEqual(product.id, None)
+        self.assertEqual(product.name, "Headphone")
+        self.assertEqual(product.description, "Noise cancelling")
+        self.assertEqual(product.price, 100.00)
+
+    def test_add_a_product(self):
+        """It should Create a product and add it to the database"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        product = ProductFactory()
+        product.create()
+        # Assert that it was assigned an id and shows up in the database
+        self.assertIsNotNone(product.id)
+        products = Product.all()
+        self.assertEqual(len(products), 1)
+
+    @patch("service.models.db.session.commit")
+    def test_add_product_failed(self, exception_mock):
+        """It should not create a product on database error"""
+        exception_mock.side_effect = Exception()
+        product = ProductFactory()
+        self.assertRaises(DataValidationError, product.create)
+
+    # Read
+    def test_read_product(self):
+        """It should Read a product"""
+        product = ProductFactory()
+        product.create()
+
+        # Read it back
+        found_product = Product.find(product.id)
+
+        self.assertEqual(found_product.id, product.id)
+        self.assertEqual(found_product.name, product.name)
+        self.assertEqual(found_product.description, product.description)
+        self.assertEqual(found_product.price, product.price)
+
+    # Delete
+    def test_delete_a_product(self):
+        """It should Delete a product from the database"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        product = ProductFactory()
+        product.create()
+        # Assert that it was assigned an id and shows up in the database
+        self.assertIsNotNone(product.id)
+        products = Product.all()
+        self.assertEqual(len(products), 1)
+        product = products[0]
+        product.delete()
+        products = Product.all()
+        self.assertEqual(len(products), 0)
+
+    @patch("service.models.db.session.commit")
+    def test_delete_product_failed(self, exception_mock):
+        """It should not delete a product on database error"""
+        exception_mock.side_effect = Exception()
+        product = ProductFactory()
+        self.assertRaises(DataValidationError, product.delete)
+
+    # Update
+    def test_update_product(self):
+        """It should Update a Product"""
+        product = ProductFactory()
+        product.create()
+        self.assertIsNotNone(product.id)
+        product.description = "Updated description"
+        original_id = product.id
+        product.update()
+        self.assertEqual(product.id, original_id)
+        self.assertEqual(product.description, "Updated description")
+        products = Product.all()
+        self.assertEqual(len(products), 1)
+        self.assertEqual(products[0].id, original_id)
+        self.assertEqual(products[0].description, "Updated description")
+
+    @patch("service.models.db.session.commit")
+    def test_update_product_failed(self, exception_mock):
+        """It should not update a product on database error"""
+        exception_mock.side_effect = Exception()
+        product = ProductFactory()
+        self.assertRaises(DataValidationError, product.update)
+
+    # Delete
+    def test_delete_product(self):
+        """It should Delete a Product"""
+        product = ProductFactory()
+        product.create()
+        self.assertEqual(len(Product.all()), 1)
+        product.delete()
+        self.assertEqual(len(Product.all()), 0)
+
+    # List
     def test_list_all_products(self):
         """It should List all products in the database"""
         products = Product.all()
         self.assertEqual(products, [])
-        # Create 5 products
         for _ in range(5):
             product = ProductFactory()
             product.create()
-        # See if we get back 5 products
         products = Product.all()
         self.assertEqual(len(products), 5)
+
+    # Serialization
+    def test_serialize_a_product(self):
+        """It should serialize a Product"""
+        product = ProductFactory()
+        data = product.serialize()
+        self.assertNotEqual(data, None)
+        self.assertIn("id", data)
+        self.assertEqual(data["id"], product.id)
+        self.assertIn("name", data)
+        self.assertEqual(data["name"], product.name)
+        self.assertIn("description", data)
+        self.assertEqual(data["description"], product.description)
+        self.assertIn("price", data)
+        self.assertEqual(data["price"], product.price)
+
+    def test_deserialize_a_product(self):
+        """It should de-serialize a Product"""
+        data = ProductFactory().serialize()
+        product = Product()
+        product.deserialize(data)
+        self.assertNotEqual(product, None)
+        self.assertEqual(product.id, None)
+        self.assertEqual(product.name, data["name"])
+        self.assertEqual(product.description, data["description"])
+        self.assertEqual(product.price, data["price"])
+
+    def test_deserialize_missing_data(self):
+        """It should not deserialize a Product with missing data"""
+        data = {"id": 1, "name": "Monitor"}
+        product = Product()
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    def test_deserialize_bad_data(self):
+        """It should not deserialize bad data"""
+        data = "this is not a dictionary"
+        product = Product()
+        self.assertRaises(DataValidationError, product.deserialize, data)
+
+    # Find
+    def test_find_product_by_id(self):
+        """It should Find a Product by ID"""
+        products = ProductFactory.create_batch(5)
+        for product in products:
+            product.create()
+        logging.debug(products)
+        for product in products:
+            found = Product.find(product.id)
+            self.assertEqual(found.id, product.id)
+            self.assertEqual(found.name, product.name)
+            self.assertEqual(found.description, product.description)
+            self.assertEqual(found.price, product.price)
