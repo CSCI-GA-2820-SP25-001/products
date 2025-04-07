@@ -78,6 +78,38 @@ def create_product():
     return (jsonify(product.serialize()), status.HTTP_201_CREATED)
 
 
+######################################################################
+# LIST PRODUCTS (with optional filters)
+######################################################################
+def list_products():
+    """Returns a list of Products with optional query parameters"""
+    app.logger.info("Request for product list")
+
+    id = request.args.get("id")
+    name = request.args.get("name")
+    description = request.args.get("description")
+    price = request.args.get("price")
+
+    # convert id and price to correct types
+    if id is not None:
+        try:
+            id = int(id)
+        except ValueError:
+            abort(status.HTTP_400_BAD_REQUEST, "ID must be an integer.")
+
+    if price is not None:
+        try:
+            price = float(price)
+        except ValueError:
+            abort(status.HTTP_400_BAD_REQUEST, "Price must be a number.")
+
+    products = Product.find_by_attributes(
+        id=id, name=name, description=description, price=price
+    )
+    results = [product.serialize() for product in products]
+    return jsonify(results), status.HTTP_200_OK
+
+
 # todo - {"Location": location_url} << we have to addd this later
 
 
@@ -160,34 +192,47 @@ def delete_products(product_id):
 ######################################################################
 @app.route("/products", methods=["GET"])
 def list_products():
-    """Returns all of the products"""
-    app.logger.info("Request for products list")
-
-    products = []
-
-    # Parse any arguments from the query string
+    """Returns a list of Products with optional query parameters"""
+    app.logger.info("Request for product list")
     id = request.args.get("id")
     name = request.args.get("name")
     description = request.args.get("description")
     price = request.args.get("price")
+    price_lt = request.args.get("price_lt")  # <--- also check price_lt
 
-    if id:
-        app.logger.info("Find by id: %d", int(id))
-        products = Product.find_by_id(id)
-    elif name:
-        app.logger.info("Find by name: %s", name)
-        products = Product.find_by_name(name)
-    elif description:
-        products = Product.find_by_description(description)
-    elif price:
-        app.logger.info("Find by price: %f", float(price))
-        products = Product.find_by_price(float(price))
-    else:
-        app.logger.info("Find all")
-        products = Product.all()
+    # Start building the query
+    query = Product.query
 
-    results = [products.serialize() for products in products]
-    app.logger.info("Returning %d products", len(results))
+    if id is not None:
+        try:
+            id = int(id)
+            query = query.filter(Product.id == id)
+        except ValueError:
+            abort(status.HTTP_400_BAD_REQUEST, "ID must be an integer.")
+
+    if name:
+        query = query.filter(Product.name.ilike(f"%{name}%"))
+
+    if description:
+        query = query.filter(Product.description.ilike(f"%{description}%"))
+
+    if price is not None:
+        try:
+            price = float(price)
+            query = query.filter(Product.price == price)
+        except ValueError:
+            abort(status.HTTP_400_BAD_REQUEST, "Price must be a number.")
+
+    if price_lt:
+        try:
+            price_lt = float(price_lt)
+            query = query.filter(Product.price < price_lt)
+        except ValueError:
+            abort(status.HTTP_400_BAD_REQUEST, "price_lt must be a number.")
+
+    products = query.all()
+
+    results = [product.serialize() for product in products]
     return jsonify(results), status.HTTP_200_OK
 
 
