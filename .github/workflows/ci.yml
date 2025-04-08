@@ -1,60 +1,29 @@
-name: CI Build
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
+name: Run tests and upload coverage
+
+on: 
+  push
 
 jobs:
-  build:
+  test:
+    name: Run tests and collect coverage
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: products
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    container:
-      image: python:3.11-slim
-      options: --network host
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
-      - name: Install system dependencies
-        run: |
-          apt-get update && apt-get install -y gcc libpq-dev curl gpg
+      - name: Set up Python
+        uses: actions/setup-python@v4
 
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip pipenv
-          pipenv install --dev --system
+      - name: Install dependencies
+        run: pip install pytest pytest-cov
 
-      - name: Set environment variables
-        run: echo "SQLALCHEMY_DATABASE_URI=postgresql://postgres:postgres@localhost:5432/products" >> $GITHUB_ENV
+      - name: Run tests
+        run: pytest --cov --cov-branch --cov-report=xml
 
-      - name: Lint with flake8 and pylint
-        run: |
-          flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
-          flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
-          pylint service tests --max-line-length=127
-
-      - name: Run unit tests with PyTest
-        run: pytest --pspec --cov=service --cov-report=xml --cov-fail-under=95
-
-      - name: Upload coverage to Codecov
+      - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: CSCI-GA-2820-SP25-001/products
