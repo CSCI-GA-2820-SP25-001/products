@@ -4,8 +4,10 @@ Models for Product
 All of the models are stored in this module
 """
 
+from enum import Enum
 import logging
 from flask_sqlalchemy import SQLAlchemy
+from enum import Enum
 
 logger = logging.getLogger("flask.app")
 
@@ -29,6 +31,7 @@ class Product(db.Model):
     name = db.Column(db.String(63))
     description = db.Column(db.String(256))
     price = db.Column(db.Numeric(10, 2))
+    likes = db.Column(db.Integer, nullable=False, default=0)
 
     ##################################################
     # INSTANCE METHODS
@@ -81,6 +84,7 @@ class Product(db.Model):
             "name": self.name,
             "description": self.description,
             "price": self.price,
+            "likes": self.likes,
         }
 
     def deserialize(self, data):
