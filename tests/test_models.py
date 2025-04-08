@@ -27,7 +27,6 @@ from unittest import TestCase
 from wsgi import app
 
 
-from service.common import status
 from unittest.mock import patch
 from service.models import Product, DataValidationError, db
 from tests.factories import ProductFactory

@@ -4,10 +4,8 @@ Models for Product
 All of the models are stored in this module
 """
 
-from enum import Enum
 import logging
 from flask_sqlalchemy import SQLAlchemy
-from enum import Enum
 
 logger = logging.getLogger("flask.app")
 

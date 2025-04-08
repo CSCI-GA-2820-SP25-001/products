@@ -22,7 +22,6 @@ TestProduct API Service Test Suite
 import os
 import logging
 from unittest import TestCase
-from unittest.mock import patch, MagicMock
 from urllib.parse import quote_plus
 from wsgi import app
 from service.common import status
