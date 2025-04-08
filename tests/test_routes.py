@@ -21,13 +21,14 @@ TestProduct API Service Test Suite
 # pylint: disable=duplicate-code
 import os
 import logging
+from decimal import Decimal
 from unittest import TestCase
 from urllib.parse import quote_plus
+
 from wsgi import app
 from service.common import status
 from service.models import db, Product
 from .factories import ProductFactory
-from decimal import Decimal
 
 
 DATABASE_URI = os.getenv(

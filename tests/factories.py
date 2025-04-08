@@ -27,4 +27,3 @@ class ProductFactory(factory.Factory):
     )
     likes = 0
 
-    # Todo: Add your other attributes here...
