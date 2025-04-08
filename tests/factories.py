@@ -26,5 +26,3 @@ class ProductFactory(factory.Factory):
         max_value=99999999.99,
     )
     likes = 0
-
-    # Todo: Add your other attributes here...

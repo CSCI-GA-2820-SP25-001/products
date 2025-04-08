@@ -22,15 +22,12 @@ Test cases for product Model
 import os
 import logging
 from unittest import TestCase
-
+from unittest.mock import patch
 
 from wsgi import app
-
-
-from service.common import status
-from unittest.mock import patch
 from service.models import Product, DataValidationError, db
 from tests.factories import ProductFactory
+
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"

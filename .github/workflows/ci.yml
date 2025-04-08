@@ -20,23 +20,30 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl gpg
+      
       - name: Install Python package dependencies
         run: |
           python -m pip install -U pip pipenv
           pipenv install --system --dev
-
       - name: Linting
         run: |
           flake8 service tests --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 service tests --count --max-complexity=10 --max-line-length=127 --statistics
           pylint service tests --max-line-length=127
-
       - name: Run unit tests with PyTest
         run: pytest --pspec --cov=service --cov-report=xml --cov-fail-under=95
         env:
-          DATABASE_URI: "redis://redis:6379"
+          DATABASE_URI: "sqlite:///:memory:"
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -169,14 +169,14 @@ def list_products():
     products = []
 
     # Parse any arguments from the query string
-    id = request.args.get("id")
+    product_id = request.args.get("id")
     name = request.args.get("name")
     description = request.args.get("description")
     price = request.args.get("price")
 
-    if id:
-        app.logger.info("Find by id: %d", int(id))
-        products = Product.find_by_id(id)
+    if product_id:
+        app.logger.info("Find by id: %d", int(product_id))
+        products = Product.find_by_id(product_id)
     elif name:
         app.logger.info("Find by name: %s", name)
         products = Product.find_by_name(name)
