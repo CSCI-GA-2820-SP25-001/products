@@ -12,19 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     container: python:3.11-slim
 
-    # Required services    
-    services:
-      # Label used to access the service container
-      redis:
-        # Docker Hub image
-        image: redis:6-alpine
-        # Set health checks to wait until redis has started
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     # Steps for the build
     steps:
       - name: Checkout
@@ -46,8 +33,6 @@ jobs:
 
       - name: Run unit tests with PyTest
         run: pytest --pspec --cov=service --cov-fail-under=95 --cov-report=xml
-        env:
-          DATABASE_URI: "redis://redis:6379"
 
       ######################################################################
       # Create a CODECOV_TOKEN in Settings->Secrets and variables->Actions
