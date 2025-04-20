@@ -16,8 +16,6 @@ db = SQLAlchemy()
 class DataValidationError(Exception):
     """Used for data validation errors when deserializing"""
 
-    pass
-
 
 class Product(db.Model):
     """

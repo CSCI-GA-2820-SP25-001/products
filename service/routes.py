@@ -254,6 +254,15 @@ def like_product(product_id):
 
 
 ######################################################################
+# CHECK HEALTH
+######################################################################
+@app.route("/products/health", methods=["GET"])
+def health_check():
+    """Health check endpoint"""
+    return jsonify(status="OK"), status.HTTP_200_OK
+
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 def error(status_code, reason):
