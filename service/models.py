@@ -14,7 +14,13 @@ db = SQLAlchemy()
 
 
 class DataValidationError(Exception):
-    """Used for an data validation errors when deserializing""" """
+    """Used for data validation errors when deserializing"""
+
+    pass
+
+
+class Product(db.Model):
+    """
     Class that represents a Product
     """
 
@@ -32,14 +38,13 @@ class DataValidationError(Exception):
     ##################################################
 
     def __repr__(self):
+        """Returns a string representation of the Product"""
         return f"<Product {self.name} id=[{self.id}]>"
 
     def create(self):
-        """
-        Creates a Product to the database
-        """
+        """Creates a Product in the database"""
         logger.info("Creating %s", self.name)
-        self.id = None  # pylint: disable=invalid-name
+        self.id = None
         try:
             db.session.add(self)
             db.session.commit()
@@ -49,9 +54,7 @@ class DataValidationError(Exception):
             raise DataValidationError(e) from e
 
     def update(self):
-        """
-        Updates a Product to the database
-        """
+        """Updates a Product in the database"""
         logger.info("Saving %s", self.name)
         try:
             db.session.commit()
@@ -61,7 +64,7 @@ class DataValidationError(Exception):
             raise DataValidationError(e) from e
 
     def delete(self):
-        """Removes a Product from the data store"""
+        """Deletes a Product from the database"""
         logger.info("Deleting %s", self.name)
         try:
             db.session.delete(self)
@@ -79,93 +82,6 @@ class DataValidationError(Exception):
             "description": self.description,
             "price": self.price,
             "likes": self.likes,
-        }
-
-    def deserialize(self, data):
-        """
-        Deserializes a Product from a dictionary
-
-        Args:
-            data (dict): A dictionary containing the resource data
-        """
-        try:
-            self.name = data["name"]
-            self.description = data["description"]
-            self.price = data["price"]
-        except AttributeError as error:
-            raise DataValidationError("Invalid attribute: " + error.args[0]) from error
-        except KeyError as error:
-            raise DataValidationError(
-                "Invalid Product: missing " + error.args[0]
-            ) from error
-        except TypeError as error:
-            raise DataValidationError(
-                "Invalid Product: body of request contained bad or no data "
-                + str(error)
-            ) from error
-        return self
-
-
-class Product(db.Model):
-    """
-    Class that represents a Product
-    """
-
-    ##################################################
-    # Table Schema
-    ##################################################
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
-    description = db.Column(db.String(256))
-    price = db.Column(db.Numeric(10, 2))
-
-    ##################################################
-    # INSTANCE METHODS (create, update, delete, serialize, deserialize)
-    ##################################################
-
-    def __repr__(self):
-        return f"<Product {self.name} id=[{self.id}]>"
-
-    def create(self):
-        """Creates a Product to the database"""
-        logger.info("Creating %s", self.name)
-        self.id = None
-        try:
-            db.session.add(self)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            logger.error("Error creating record: %s", self)
-            raise DataValidationError(e) from e
-
-    def update(self):
-        """Updates a Product to the database"""
-        logger.info("Saving %s", self.name)
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            logger.error("Error updating record: %s", self)
-            raise DataValidationError(e) from e
-
-    def delete(self):
-        """Removes a Product from the data store"""
-        logger.info("Deleting %s", self.name)
-        try:
-            db.session.delete(self)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            logger.error("Error deleting record: %s", self)
-            raise DataValidationError(e) from e
-
-    def serialize(self):
-        """Serializes a Product into a dictionary"""
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "price": self.price,
         }
 
     def deserialize(self, data):
@@ -231,16 +147,14 @@ class Product(db.Model):
     def find_by_attributes(
         cls, product_id=None, name=None, description=None, price=None
     ):
+        """Finds Products using optional filters"""
         query = cls.query
         if product_id is not None:
             query = query.filter(cls.id == product_id)
-        if id is not None:
-            query = query.filter(cls.id == id)
         if name is not None:
             query = query.filter(cls.name.ilike(f"%{name}%"))
         if description is not None:
             query = query.filter(cls.description.ilike(f"%{description}%"))
-
         if price is not None:
             query = query.filter(cls.price == price)
         return query.all()
