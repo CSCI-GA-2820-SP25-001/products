@@ -212,6 +212,40 @@ class TestProductService(TestCase):
             products.append(test_product)
         return products
 
+    def test_query_product_with_invalid_id(self):
+        """It should return 400 if id is not an integer"""
+        response = self.client.get(BASE_URL + "?id=not-an-int")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_query_product_with_invalid_price(self):
+        """It should return 400 if price is not a number"""
+        response = self.client.get(BASE_URL + "?price=abc")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_query_product_with_invalid_price_lt(self):
+        """It should return 400 if price_lt is not a number"""
+        response = self.client.get(BASE_URL + "?price_lt=cheap")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_find_by_attributes(self):
+        """It should find product by multiple attributes"""
+        product = Product(
+            name="Magic Keyboard", description="Apple keyboard", price=129.99
+        )
+        product.create()
+
+        results = Product.find_by_attributes(
+            product_id=product.id,
+            name="Magic Keyboard",
+            description="Apple keyboard",
+            price=129.99,
+        )
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].name, "Magic Keyboard")
+        self.assertEqual(results[0].description, "Apple keyboard")
+        self.assertEqual(float(results[0].price), 129.99)
+
     # ----------------------------------------------------------
     # TEST CREATE PRODUCT
     # ----------------------------------------------------------
@@ -264,6 +298,17 @@ class TestProductService(TestCase):
     def test_no_content_type(self):
         """It should return a 415 unsupported media type"""
         resp = self.client.post("/products", data="product_status=pending")
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_create_missing_content_type_header(self):
+        """It should return 415 if no Content-Type header is present"""
+        resp = self.client.post("/products", data="{}")
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+    def test_create_wrong_content_type_header(self):
+        """It should return 415 if wrong Content-Type header"""
+        headers = {"Content-Type": "text/plain"}
+        resp = self.client.post("/products", headers=headers, data="{}")
         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     # ----------------------------------------------------------
@@ -393,6 +438,11 @@ class TestProductService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(data["likes"], 2)
+
+    def test_like_nonexistent_product(self):
+        """It should return 404 when liking a product that does not exist"""
+        response = self.client.put("/products/99999/like")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     # ----------------------------------------------------------
     # TEST Health
