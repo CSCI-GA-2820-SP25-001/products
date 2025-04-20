@@ -243,3 +243,63 @@ class TestProduct(TestCase):
             self.assertEqual(found.name, product.name)
             self.assertEqual(found.description, product.description)
             self.assertEqual(found.price, product.price)
+
+    def test_find_by_name(self):
+        """It should Find Products by name"""
+        product = ProductFactory(name="AirPods")
+        product.create()
+        results = Product.find_by_name("AirPods").all()
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].name, "AirPods")
+
+    def test_find_by_description(self):
+        """It should Find Products by description"""
+        product = ProductFactory(description="Wireless Earbuds")
+        product.create()
+        results = Product.find_by_description("Wireless Earbuds")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].description, "Wireless Earbuds")
+
+    def test_find_by_price(self):
+        """It should Find Products by price"""
+        product = ProductFactory(price=199.99)
+        product.create()
+        results = Product.find_by_price(199.99)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(float(results[0].price), 199.99)
+
+    def test_find_by_price_less_than(self):
+        """It should Find Products with price less than a value"""
+        cheap_product = ProductFactory(price=49.99)
+        expensive_product = ProductFactory(price=499.99)
+        cheap_product.create()
+        expensive_product.create()
+        results = Product.find_by_price_less_than(100).all()
+        self.assertEqual(len(results), 1)
+        self.assertEqual(float(results[0].price), 49.99)
+
+    def test_deserialize_with_missing_name(self):
+        """It should raise DataValidationError when 'name' is missing"""
+        product = Product()
+        data = {"description": "test", "price": 9.99}
+        with self.assertRaises(DataValidationError):
+            product.deserialize(data)
+
+    def test_deserialize_with_bad_type(self):
+        """It should raise DataValidationError when bad type is passed"""
+        product = Product()
+        with self.assertRaises(DataValidationError):
+            product.deserialize("not a dict")
+
+    def test_deserialize_with_invalid_attribute(self):
+        """It should raise DataValidationError on invalid attribute access"""
+        product = Product()
+        with self.assertRaises(DataValidationError):
+            product.deserialize({"name": "test", "description": "desc"})
+
+    def test_serialize_with_likes(self):
+        """It should serialize with 'likes' field"""
+        product = Product(name="Test", description="desc", price=10.0)
+        product.likes = 3
+        result = product.serialize()
+        self.assertEqual(result["likes"], 3)
