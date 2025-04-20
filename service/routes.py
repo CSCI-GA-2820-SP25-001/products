@@ -162,40 +162,63 @@ def delete_products(product_id):
 # LIST ALL PRODUCTS
 ######################################################################
 def _apply_query_filters(query):
-    """Helper function to apply filters to the Product query"""
-    product_id = request.args.get("id")
-    name = request.args.get("name")
-    description = request.args.get("description")
-    price = request.args.get("price")
-    price_lt = request.args.get("price_lt")
+    """Applies query filters based on request args"""
+    filters = [
+        _filter_by_id,
+        _filter_by_name,
+        _filter_by_description,
+        _filter_by_price,
+        _filter_by_price_lt,
+    ]
+    for f in filters:
+        query = f(query)
+    return query
 
+
+def _filter_by_id(query):
+    product_id = request.args.get("id")
     if product_id is not None:
         try:
             product_id = int(product_id)
             query = query.filter(Product.id == product_id)
         except ValueError:
             abort(status.HTTP_400_BAD_REQUEST, "ID must be an integer.")
+    return query
 
+
+def _filter_by_name(query):
+    name = request.args.get("name")
     if name:
         query = query.filter(Product.name.ilike(f"%{name}%"))
+    return query
 
+
+def _filter_by_description(query):
+    description = request.args.get("description")
     if description:
         query = query.filter(Product.description.ilike(f"%{description}%"))
+    return query
 
+
+def _filter_by_price(query):
+    price = request.args.get("price")
     if price is not None:
         try:
             price = float(price)
             query = query.filter(Product.price == price)
         except ValueError:
             abort(status.HTTP_400_BAD_REQUEST, "Price must be a number.")
+    return query
 
-    if price_lt:
+
+def _filter_by_price_lt(query):
+    price_lt = request.args.get("price_lt")
+    if price_lt is not None:
         try:
             price_lt = float(price_lt)
             query = query.filter(Product.price < price_lt)
         except ValueError:
             abort(status.HTTP_400_BAD_REQUEST, "price_lt must be a number.")
-
     return query
 
 
