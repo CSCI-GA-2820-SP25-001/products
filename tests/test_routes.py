@@ -279,3 +279,12 @@ class TestProductService(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         data = response.get_json()
         self.assertEqual(data["likes"], 2)
+
+    # ----------------------------------------------------------
+    # TEST Health
+    # ----------------------------------------------------------
+    def test_health_check(self):
+        """It should return status OK for the health check"""
+        response = self.client.get("/products/health")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.get_json(), {"status": "OK"})
