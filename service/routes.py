@@ -71,48 +71,19 @@ def create_product():
     product.create()
     app.logger.info("Product with new id [%s] saved!", product.id)
 
-    # todo - uncomment this code when get account is implemented
     # Return the location of the new Product
-    # location_url = url_for("get_product", product_id=product.id, _external=True)
+    location_url = url_for("get_product", product_id=product.id, _external=True)
 
-    return (jsonify(product.serialize()), status.HTTP_201_CREATED)
-
-
-######################################################################
-# LIST PRODUCTS (with optional filters)
-######################################################################
-def list_products():
-    """Returns a list of Products with optional query parameters"""
-    app.logger.info("Request for product list")
-
-    id = request.args.get("id")
-    name = request.args.get("name")
-    description = request.args.get("description")
-    price = request.args.get("price")
-
-    # convert id and price to correct types
-    if id is not None:
-        try:
-            id = int(id)
-        except ValueError:
-            abort(status.HTTP_400_BAD_REQUEST, "ID must be an integer.")
-
-    if price is not None:
-        try:
-            price = float(price)
-        except ValueError:
-            abort(status.HTTP_400_BAD_REQUEST, "Price must be a number.")
-
-    products = Product.find_by_attributes(
-        id=id, name=name, description=description, price=price
+    return (
+        jsonify(product.serialize()),
+        status.HTTP_201_CREATED,
+        {"Location": location_url},
     )
-    results = [product.serialize() for product in products]
-    return jsonify(results), status.HTTP_200_OK
 
 
-# todo - {"Location": location_url} << we have to addd this later
-
-
+######################################################################
+# UPDATE A PRODUCT
+######################################################################
 @app.route("/products/<int:product_id>", methods=["PUT"])
 def update_product(product_id):
     """
@@ -146,7 +117,7 @@ def update_product(product_id):
 # READ A PRODUCT
 ######################################################################
 @app.route("/products/<int:product_id>", methods=["GET"])
-def get_products(product_id):
+def get_product(product_id):
     """
     Retrieve a single Product
 
@@ -194,13 +165,13 @@ def delete_products(product_id):
 def list_products():
     """Returns a list of Products with optional query parameters"""
     app.logger.info("Request for product list")
+
     id = request.args.get("id")
     name = request.args.get("name")
     description = request.args.get("description")
     price = request.args.get("price")
-    price_lt = request.args.get("price_lt")  # <--- also check price_lt
+    price_lt = request.args.get("price_lt")
 
-    # Start building the query
     query = Product.query
 
     if id is not None:
@@ -231,9 +202,28 @@ def list_products():
             abort(status.HTTP_400_BAD_REQUEST, "price_lt must be a number.")
 
     products = query.all()
-
     results = [product.serialize() for product in products]
     return jsonify(results), status.HTTP_200_OK
+
+
+######################################################################
+# LIKE A PRODUCT
+######################################################################
+@app.route("/products/<int:product_id>/like", methods=["PUT"])
+def like_product(product_id):
+    """Like a product (increment the likes count)"""
+    app.logger.info("Request to like product with id: %d", product_id)
+    product = Product.find(product_id)
+    if not product:
+        abort(
+            status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found."
+        )
+
+    product.likes += 1
+    product.update()
+
+    app.logger.info("Product with ID: %d has now %d likes.", product.id, product.likes)
+    return jsonify(product.serialize()), status.HTTP_200_OK
 
 
 ######################################################################

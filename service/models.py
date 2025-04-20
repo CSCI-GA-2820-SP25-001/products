@@ -25,6 +25,7 @@ class DataValidationError(Exception):
     name = db.Column(db.String(63))
     description = db.Column(db.String(256))
     price = db.Column(db.Numeric(10, 2))
+    likes = db.Column(db.Integer, nullable=False, default=0)
 
     ##################################################
     # INSTANCE METHODS
@@ -77,6 +78,7 @@ class DataValidationError(Exception):
             "name": self.name,
             "description": self.description,
             "price": self.price,
+            "likes": self.likes,
         }
 
     def deserialize(self, data):
