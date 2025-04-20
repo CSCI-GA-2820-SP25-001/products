@@ -70,6 +70,120 @@ class TestProductService(TestCase):
         """This runs after each test"""
         db.session.remove()
 
+    # def test_query_products_by_category(self):
+    # """It should Query Products by Category"""
+    # product1 = ProductFactory(category="Electronics")
+    # product2 = ProductFactory(category="Clothing")
+    # self.client.post(BASE_URL, json=product1.serialize())
+    # self.client.post(BASE_URL, json=product2.serialize())
+
+    # response = self.client.get(BASE_URL, query_string="category=Electronics")
+    # self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # data = response.get_json()
+    # self.assertEqual(len(data), 1)
+    # self.assertEqual(data[0]["category"], "Electronics")
+
+    def test_query_products_by_name(self):
+        """It should Query Products by Name"""
+        product = ProductFactory(name="iPhone")
+        self.client.post(BASE_URL, json=product.serialize())
+
+        response = self.client.get(BASE_URL, query_string="name=iPhone")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["name"], "iPhone")
+
+    def test_query_products_by_price_lt(self):
+        """It should Query Products by Price Less Than"""
+        # Clear the database
+        db.session.query(Product).delete()
+        db.session.commit()
+
+        # Create two products
+        product1 = Product(name="Cheap Product", description="Low price", price=50)
+        product2 = Product(
+            name="Expensive Product", description="High price", price=150
+        )
+
+        db.session.add(product1)
+        db.session.add(product2)
+        db.session.commit()
+
+        # Now test the endpoint
+        response = self.client.get(BASE_URL, query_string={"price_lt": 100})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(float(data[0]["price"]), 50.0)  # Check that it's the cheap one
+
+    # def test_query_products_no_matches(self):
+    # """It should return an empty list if no products match"""
+    # product = ProductFactory(category="Books")
+    # self.client.post(BASE_URL, json=product.serialize())
+
+    # response = self.client.get(BASE_URL, query_string="category=Electronics")
+    # self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # data = response.get_json()
+    # self.assertEqual(data, [])
+
+    def test_query_products(self):
+        """It should Query Products by attributes"""
+        product1 = ProductFactory(name="iPhone", description="Smartphone", price=999.99)
+        product2 = ProductFactory(
+            name="Samsung Galaxy", description="Android Phone", price=899.99
+        )
+        product3 = ProductFactory(name="MacBook", description="Laptop", price=1299.99)
+
+        db.session.add(product1)
+        db.session.add(product2)
+        db.session.add(product3)
+        db.session.commit()
+
+        # Query by name
+        response = self.client.get(BASE_URL, query_string={"name": "iPhone"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["name"], "iPhone")
+
+        # Query by description
+        response = self.client.get(BASE_URL, query_string={"description": "Laptop"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["description"], "Laptop")
+
+        # Query by price
+        response = self.client.get(BASE_URL, query_string={"price": "999.99"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(float(data[0]["price"]), 999.99)
+
+        # Query by id
+        response = self.client.get(BASE_URL, query_string={"id": product2.id})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["id"], product2.id)
+
+        # Query no matches
+        response = self.client.get(BASE_URL, query_string={"name": "NonExistent"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(len(data), 0)
+
+        # No query params (return all)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertGreaterEqual(len(data), 3)
+
     ######################################################################
     #  P L A C E   T E S T   C A S E S   H E R E
     ######################################################################
