@@ -161,18 +161,13 @@ def delete_products(product_id):
 ######################################################################
 # LIST ALL PRODUCTS
 ######################################################################
-@app.route("/products", methods=["GET"])
-def list_products():
-    """Returns a list of Products with optional query parameters"""
-    app.logger.info("Request for product list")
-
+def _apply_query_filters(query):
+    """Helper function to apply filters to the Product query"""
     product_id = request.args.get("id")
     name = request.args.get("name")
     description = request.args.get("description")
     price = request.args.get("price")
     price_lt = request.args.get("price_lt")
-
-    query = Product.query
 
     if product_id is not None:
         try:
@@ -201,6 +196,15 @@ def list_products():
         except ValueError:
             abort(status.HTTP_400_BAD_REQUEST, "price_lt must be a number.")
 
+    return query
+
+
+@app.route("/products", methods=["GET"])
+def list_products():
+    """Returns a list of Products with optional query parameters"""
+    app.logger.info("Request for product list")
+    query = Product.query
+    query = _apply_query_filters(query)
     products = query.all()
     results = [product.serialize() for product in products]
     return jsonify(results), status.HTTP_200_OK
