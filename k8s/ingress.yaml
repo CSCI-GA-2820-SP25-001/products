@@ -1,0 +1,19 @@
+# This file defines an Ingress resource for the products service.
+# It specifies the rules for routing external HTTP traffic to the products service.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: products
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /products
+        pathType: Prefix
+        backend:
+          service:
+            name: products
+            port:
+              number: 8080

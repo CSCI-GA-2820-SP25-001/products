@@ -245,3 +245,12 @@ def check_content_type(content_type) -> None:
         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
         f"Content-Type must be {content_type}",
     )
+
+
+######################################################################
+# Kubernetes Health Check
+######################################################################
+@app.route("/products/health", methods=["GET"])
+def health():
+    """Health check endpoint for Kubernetes"""
+    return jsonify(status="OK"), 200
