@@ -228,9 +228,12 @@ class Product(db.Model):
         return cls.query.filter(cls.price < price)
 
     @classmethod
-    def find_by_attributes(cls, id=None, name=None, description=None, price=None):
-        """Finds Products by optional attributes"""
+    def find_by_attributes(
+        cls, product_id=None, name=None, description=None, price=None
+    ):
         query = cls.query
+        if product_id is not None:
+            query = query.filter(cls.id == product_id)
         if id is not None:
             query = query.filter(cls.id == id)
         if name is not None:
