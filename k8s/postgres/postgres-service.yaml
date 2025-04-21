@@ -1,0 +1,15 @@
+# This file is part of the Kubernetes configuration for deploying a PostgreSQL database.
+# It defines a headless service that allows direct access to the PostgreSQL pods.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+  selector:
+    app: postgres
+  clusterIP: None
