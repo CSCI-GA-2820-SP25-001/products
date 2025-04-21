@@ -26,6 +26,14 @@ from flask import current_app as app  # Import Flask application
 from service.models import Product
 from service.common import status  # HTTP Status Codes
 
+######################################################################
+# GET HEALTH CHECK
+######################################################################
+
+@app.route("/health")
+def health_check():
+    """Let them know our heart is still beating"""
+    return jsonify(status=200, message="Healthy"), status.HTTP_200_OK
 
 ######################################################################
 # GET INDEX
