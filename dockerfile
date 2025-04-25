@@ -1,7 +1,7 @@
 ##################################################
 # Create production image
 ##################################################
-FROM python:3.11-slim
+FROM quay.io/rofrano/python:3.11-slim
 
 # Set up the Python production environment
 WORKDIR /app
@@ -11,7 +11,7 @@ RUN python -m pip install --upgrade pip pipenv && \
 
 # Copy the application contents
 COPY wsgi.py .
-COPY service/ ./service/
+COPY service ./service
 
 # Switch to a non-root user and set file ownership
 RUN useradd --uid 1001 flask && \
