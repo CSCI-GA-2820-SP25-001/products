@@ -5,7 +5,7 @@ Feature: The products service back-end
 
 Background:
     Given the following products
-        | Name     | Description            | Price    |
+        | name     | description            | price    |
         | Prod #1  | Our first product      | 30.00    |
         | Prod #2  | Our second product     | 4.15     |
         | Prod #3  | Another product        | 3.27     |

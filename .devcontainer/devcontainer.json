@@ -9,6 +9,7 @@
 		"vscode": {
 			"settings": {
 				"cSpell.words": [
+					"Rofrano",
 					"sqlalchemy",
 					"psycopg",
 					"pytest",
@@ -17,7 +18,11 @@
 					"testdb",			
 					"creds",
 					"virtualenvs",
-					"shopcarts"
+					"shopcarts",
+					"dotenv",
+					"pytest",
+					"virtualenvs",
+					"wsgi"
 				],
 				"[python]": {
 					"editor.defaultFormatter": "ms-python.black-formatter",
@@ -32,13 +37,19 @@
 				"python.testing.pytestArgs": [
 					"tests"
 				],
+				"cucumberautocomplete.steps": ["features/steps/*.py"],
+				"cucumberautocomplete.syncfeatures": "features/*.feature",
+				"cucumberautocomplete.strictGherkinCompletion": true,
+				"cucumberautocomplete.strictGherkinValidation": true,
+				"cucumberautocomplete.smartSnippets": true,
+				"cucumberautocomplete.gherkinDefinitionPart": "@(given|when|then)\\(",
 				"files.exclude": {
 					"**/.git": true,
 					"**/.DS_Store": true,
 					"**/*.pyc": true,
 					"**/__pycache__": true,
 					"**/.pytest_cache": true
-				}
+				}		
 			},
 			"extensions": [
 				"ms-python.python",
@@ -73,11 +84,10 @@
 			]
 		}
 	},
-	"postCreateCommand": "bash /app/.devcontainer/scripts/post-install.sh",
-
+	
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [8080],
-
+	"postCreateCommand": "bash /app/.devcontainer/scripts/post-install.sh",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
