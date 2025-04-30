@@ -5,11 +5,11 @@ Feature: The products service back-end
 
 Background:
     Given the following products
-        | name     | description            | price    |
-        | Prod #1  | Our first product      | 30.00    |
-        | Prod #2  | Our second product     | 4.15     |
-        | Prod #3  | Another product        | 3.27     |
-        | Prod #4  | So many products       | 19.95    |
+        | name     | description            | price    |  likes    |
+        | Prod #1  | Our first product      | 30.00    |  100      |
+        | Prod #2  | Our second product     | 4.15     |  200      |
+        | Prod #3  | Another product        | 3.27     |  300      |
+        | Prod #4  | So many products       | 19.95    |  400      |
 Scenario: The server is running
     When I visit the "Home Page"
     Then I should see "Products RESTful Service" in the title
