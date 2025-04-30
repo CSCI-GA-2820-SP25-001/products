@@ -1,5 +1,5 @@
 # NYU DevOps Project Template
-
+1
 ## Products
 [![Build Status](https://github.com/CSCI-GA-2820-SP25-001/products/actions/workflows/ci.yml/badge.svg)](https://github.com/CSCI-GA-2820-SP25-001/products/actions)
 [![codecov](https://codecov.io/gh/CSCI-GA-2820-SP25-001/products/graph/badge.svg?token=2KQNKIJORH)](https://codecov.io/gh/CSCI-GA-2820-SP25-001/products)
