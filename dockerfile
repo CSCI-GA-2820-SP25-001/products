@@ -12,6 +12,10 @@ RUN python -m pip install --upgrade pip pipenv && \
 # Copy the application contents
 COPY wsgi.py .
 COPY service ./service
+COPY tests ./tests
+COPY . . 
+
+ENV PYTHONPATH=/app
 
 # Switch to a non-root user and set file ownership
 RUN useradd --uid 1001 flask && \
