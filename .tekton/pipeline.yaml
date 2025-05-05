@@ -100,7 +100,7 @@ spec:
         - name: IMAGE
           value: $(params.IMAGE_NAME)
         - name: DOCKERFILE
-          value: ./Dockerfile
+          value: Dockerfile
         - name: BUILD_ARGS
           value:
             - ''
