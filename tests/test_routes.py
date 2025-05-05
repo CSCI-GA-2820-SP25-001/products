@@ -40,7 +40,9 @@ BASE_URL = "/products"
 
 ######################################################################
 #  T E S T   C A S E S
-######################################################################
+#####################################################################
+
+
 # pylint: disable=too-many-public-methods
 class TestProductService(TestCase):
     """REST API Server Tests"""
@@ -443,6 +445,30 @@ class TestProductService(TestCase):
         """It should return 404 when liking a product that does not exist"""
         response = self.client.put("/products/99999/like")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_list_products_default(self):
+        """It should return an empty list and then a sorted list of all products"""
+        # 1) when there are no products
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertEqual(data, [], "Expected empty list when DB is empty")
+
+        # 2) create a few products and verify they come back sorted by id
+        products = self._create_products(3)
+        response = self.client.get(BASE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        data = response.get_json()
+        self.assertEqual(len(data), 3, "Expected three products in response")
+
+        # make sure the IDs are ascending
+        returned_ids = [p["id"] for p in data]
+        self.assertEqual(
+            returned_ids,
+            sorted(returned_ids),
+            f"Expected IDs sorted ascending, got {returned_ids}",
+        )
 
     # ----------------------------------------------------------
     # TEST Health
