@@ -33,10 +33,8 @@ from service.common import status  # HTTP Status Codes
 ######################################################################
 @app.route("/")
 def index():
-    """Serve the UI"""
-    app.logger.info("Request for Root URL")
-    return render_template("index.html"), status.HTTP_200_OK
-
+    """Base URL for our service"""
+    return app.send_static_file("index.html")
 
 ######################################################################
 #  R E S T   A P I   E N D P O I N T S
