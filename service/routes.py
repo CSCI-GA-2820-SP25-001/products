@@ -22,7 +22,6 @@ and Delete Product
 """
 
 from flask import jsonify, request, url_for, abort
-from flask import render_template
 from flask import current_app as app  # Import Flask application
 from service.models import Product
 from service.common import status  # HTTP Status Codes
@@ -35,6 +34,7 @@ from service.common import status  # HTTP Status Codes
 def index():
     """Base URL for our service"""
     return app.send_static_file("index.html")
+
 
 ######################################################################
 #  R E S T   A P I   E N D P O I N T S

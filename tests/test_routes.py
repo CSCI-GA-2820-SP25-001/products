@@ -455,7 +455,7 @@ class TestProductService(TestCase):
         self.assertEqual(data, [], "Expected empty list when DB is empty")
 
         # 2) create a few products and verify they come back sorted by id
-        products = self._create_products(3)
+        self._create_products(3)
         response = self.client.get(BASE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
