@@ -22,7 +22,6 @@ and Delete Product
 """
 
 from flask import jsonify, request, url_for, abort
-from flask import render_template
 from flask import current_app as app  # Import Flask application
 from service.models import Product
 from service.common import status  # HTTP Status Codes
@@ -33,9 +32,16 @@ from service.common import status  # HTTP Status Codes
 ######################################################################
 @app.route("/")
 def index():
-    """Serve the UI"""
+    """Root URL response"""
     app.logger.info("Request for Root URL")
-    return render_template("index.html"), status.HTTP_200_OK
+    return (
+        jsonify(
+            name="Product Demo REST API Service",
+            version="1.0",
+            paths=url_for("list_products", _external=True),
+        ),
+        status.HTTP_200_OK,
+    )
 
 
 ######################################################################
@@ -50,32 +56,22 @@ def index():
 def create_product():
     """
     Create a Product
-    This endpoint will create a Product from the JSON in the request body
+    This endpoint will create a Product based on the data in the body that is posted
     """
-    app.logger.info("Request to create a Product …")
+    app.logger.info("Request to Create a Product...")
     check_content_type("application/json")
 
-    # -----------------------------------------------------------------
-    # 1. Get JSON body (empty dict if none supplied)
-    # -----------------------------------------------------------------
-    data = request.get_json() or {}
-    app.logger.debug("Raw payload: %s", data)
-
-    # -----------------------------------------------------------------
-    # 2. Deserialize → create model instance
-    # -----------------------------------------------------------------
     product = Product()
+    # Get the data from the request and deserialize it
+    data = request.get_json()
+    app.logger.info("Processing: %s", data)
     product.deserialize(data)
 
-    # -----------------------------------------------------------------
-    # 3. Persist
-    # -----------------------------------------------------------------
-    product.create()  # writes to DB
-    app.logger.info("Product saved with id=%s", product.id)
+    # Save the new Product to the database
+    product.create()
+    app.logger.info("Product with new id [%s] saved!", product.id)
 
-    # -----------------------------------------------------------------
-    # 4. Build response
-    # -----------------------------------------------------------------
+    # Return the location of the new Product
     location_url = url_for("get_product", product_id=product.id, _external=True)
 
     return (
@@ -173,7 +169,6 @@ def _apply_query_filters(query):
         _filter_by_description,
         _filter_by_price,
         _filter_by_price_lt,
-        _filter_by_search,
     ]
     for f in filters:
         query = f(query)
@@ -227,28 +222,15 @@ def _filter_by_price_lt(query):
     return query
 
 
-def _filter_by_search(query):
-    """Substring search on name OR description (case‑insensitive)"""
-    term = request.args.get("search")
-    if term:
-        like = f"%{term}%"
-        query = query.filter(
-            (Product.name.ilike(like)) | (Product.description.ilike(like))
-        )
-    return query
-
-
 @app.route("/products", methods=["GET"])
 def list_products():
     """Returns a list of Products with optional query parameters"""
     app.logger.info("Request for product list")
     query = Product.query
     query = _apply_query_filters(query)
-
-    # always sort ascending, per ticket requirement
-    products = query.order_by(Product.id.asc()).all()
-
-    return jsonify([p.serialize() for p in products]), status.HTTP_200_OK
+    products = query.all()
+    results = [product.serialize() for product in products]
+    return jsonify(results), status.HTTP_200_OK
 
 
 ######################################################################

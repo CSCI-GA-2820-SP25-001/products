@@ -1,9 +1,12 @@
+"""
+Environment for Behave Testing
+"""
+
 from os import getenv
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 
 WAIT_SECONDS = int(getenv("WAIT_SECONDS", "30"))
-BASE_URL = getenv("BASE_URL", "http://localhost:7000")
+BASE_URL = getenv("BASE_URL", "http://localhost:8080")
 DRIVER = getenv("DRIVER", "chrome").lower()
 
 
@@ -17,6 +20,7 @@ def before_all(context):
     else:
         context.driver = get_chrome()
     context.driver.implicitly_wait(context.wait_seconds)
+    context.driver.set_window_size(1280, 1300)
     context.config.setup_logging()
 
 
@@ -31,15 +35,13 @@ def after_all(context):
 
 
 def get_chrome():
-    """Creates a head‑less Chromium driver for Behave tests"""
+    """Creates a headless Chrome driver"""
     print("Running Behave using the Chrome driver...\n")
-    opts = webdriver.ChromeOptions()
-    opts.add_argument("--headless=new")  # modern head‑less mode
-    opts.add_argument("--no-sandbox")
-    opts.add_argument("--disable-dev-shm-usage")
-    opts.binary_location = "/usr/bin/chromium"  # <── chromium binary
-    service = Service("/usr/bin/chromedriver")  # <── matching driver
-    return webdriver.Chrome(service=service, options=opts)
+    options = webdriver.ChromeOptions()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--headless")
+    return webdriver.Chrome(options=options)
 
 
 def get_firefox():

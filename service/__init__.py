@@ -36,7 +36,6 @@ def create_app():
     # Initialize Plugins
     # pylint: disable=import-outside-toplevel
     from service.models import db
-
     db.init_app(app)
 
     with app.app_context():
