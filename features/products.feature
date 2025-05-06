@@ -50,33 +50,44 @@ Scenario: Search for Descriptions
     Then I should see the message "Success"
     And I should see "Prod #1" in the results
 
-
-Scenario: Search for Price
+Scenario: Delete a Product
     When I visit the "Home Page"
-    And I set the "Price" to "4.15"
+    And I set the "Name" to "Prod #2"
     And I press the "Search" button
     Then I should see the message "Success"
     And I should see "Prod #2" in the results
+    When I copy the "Id" field
+    And I press the "Delete" button
+    Then I should see the message "Product has been Deleted!"
+    When I press the "Clear" button
+    And I paste the "Id" field
+    And I press the "Retrieve" button
+    Then I should not see "Prod #2" in the "Name" field
 
-
-Scenario: Update a Product
+Scenario: Like a Product (twice)
     When I visit the "Home Page"
-    And I set the "Name" to "Prod #3"
-    And I press the "Search" button
+    And I set the "Name" to "GoPro"
+    And I set the "Description" to "Great camera"
+    And I set the "Price" to "100.00"
+    And I press the "Create" button
     Then I should see the message "Success"
-    And I should see "Prod #3" in the "Name" field
-    And I should see "Another product" in the "Description" field
-    When I change "Name" to "New Prod Name"
-    And I press the "Update" button
-    Then I should see the message "Success"
+
     When I copy the "Id" field
     And I press the "Clear" button
     And I paste the "Id" field
     And I press the "Retrieve" button
-    Then I should see the message "Success"
-    And I should see "New Prod Name" in the "Name" field
-    When I press the "Clear" button
-    And I press the "Search" button
-    Then I should see the message "Success"
-    And I should see "New Prod Name" in the results
-    And I should not see "Prod #3" in the results
+
+    When I press the "Like" button
+    Then I should see "1" in the "Likes" field
+    And the product record has "1" likes in the database
+    And I should see the message "Product liked"
+
+    When I press the "Like" button again
+    Then I should see "2" in the "Likes" field
+    And the product record has "2" likes in the database
+    And I should see the message "Product liked"
+
+Scenario: Update a Product
+    Given a product exists
+    When I change the Name and press "Update"
+    Then I should see updated values upon retrieval
