@@ -6,7 +6,7 @@ FROM quay.io/rofrano/python:3.11-slim
 # Set up the Python production environment
 WORKDIR /app
 COPY Pipfile Pipfile.lock ./
-RUN python -m pip install --upgrade pip pipenv behave && \
+RUN python -m pip install --upgrade pip pipenv && \
     pipenv install --system --deploy
 
 # Copy the application contents
