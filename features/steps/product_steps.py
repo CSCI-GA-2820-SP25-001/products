@@ -27,12 +27,10 @@ from behave import given, when, then
 
 @given("the following products")
 def given_the_following_products(context):
-    """Clear DB then POST each table row as JSON."""
+    """Clear the database and create products from the table."""
     base = f"{context.base_url}/products"
-
     for item in requests.get(base, timeout=30).json():
         requests.delete(f"{base}/{item['id']}", timeout=30)
-
     for row in context.table:
         payload = {
             "name": row["name"],
@@ -46,21 +44,25 @@ def given_the_following_products(context):
 
 @when('I visit the "Home Page"')
 def when_i_visit_home_page(context):
+    """Visit the application's home page."""
     context.driver.get(context.base_url)
 
 
 @then('I should see "{text}" in the title')
 def then_see_text_in_title(context, text):
+    """Check that the page title contains the given text."""
     assert text in context.driver.title
 
 
 @then('I should not see "{text}"')
 def then_not_see_text(context, text):
+    """Ensure the given text is not present in the page."""
     assert text not in context.driver.page_source
 
 
 @when('I set the "{element_name}" to "{text_string}"')
 def when_set_element_to_text(context, element_name, text_string):
+    """Fill a form input field with the given text."""
     element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
     element.clear()
@@ -69,13 +71,14 @@ def when_set_element_to_text(context, element_name, text_string):
 
 @when('I press the "{button}" button')
 def when_press_button(context, button):
+    """Click the specified button."""
     button_id = button.lower() + "-btn"
     context.driver.find_element(By.ID, button_id).click()
 
 
 @then('I should see the message "{message}"')
 def then_see_message(context, message):
-    import re
+    """Check for a message in the flash message area (supports regex)."""
     if "[" in message and "]" in message:
         element = WebDriverWait(context.driver, context.wait_seconds).until(
             EC.presence_of_element_located((By.ID, "flash_message"))
@@ -91,6 +94,7 @@ def then_see_message(context, message):
 
 @when('I copy the "{element_name}" field')
 def when_copy_field(context, element_name):
+    """Copy the value of the specified field into context.clipboard."""
     element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
     context.clipboard = element.get_attribute("value")
@@ -98,6 +102,7 @@ def when_copy_field(context, element_name):
 
 @when('I paste the "{element_name}" field')
 def when_paste_field(context, element_name):
+    """Paste clipboard value into the specified input field."""
     element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
     element.clear()
@@ -106,6 +111,7 @@ def when_paste_field(context, element_name):
 
 @then('the "{element_name}" field should be empty')
 def then_field_should_be_empty(context, element_name):
+    """Assert the specified field is empty."""
     element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
     assert element.get_attribute("value") == ""
@@ -113,6 +119,7 @@ def then_field_should_be_empty(context, element_name):
 
 @then('I should see "{text_string}" in the "{element_name}" field')
 def then_see_text_in_field(context, text_string, element_name):
+    """Check that the given field contains expected text."""
     element_id = element_name.lower().replace(" ", "_")
     found = WebDriverWait(context.driver, context.wait_seconds).until(
         EC.text_to_be_present_in_element_value(
@@ -124,6 +131,7 @@ def then_see_text_in_field(context, text_string, element_name):
 
 @then('I should not see "{text_string}" in the "{element_name}" field')
 def then_not_see_text_in_field(context, text_string, element_name):
+    """Ensure the specified field does not contain given text."""
     element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
     value = element.get_attribute("value")
@@ -132,6 +140,7 @@ def then_not_see_text_in_field(context, text_string, element_name):
 
 @then('I should see "{text}" in the results')
 def then_see_text_in_results(context, text):
+    """Check that search results include expected text."""
     found = WebDriverWait(context.driver, context.wait_seconds).until(
         EC.text_to_be_present_in_element((By.ID, "search_results"), text)
     )
@@ -140,6 +149,7 @@ def then_see_text_in_results(context, text):
 
 @then('I should not see "{text}" in the results')
 def then_not_see_text_in_results(context, text):
+    """Ensure the search results do not contain given text."""
     name_field = context.driver.find_element(By.ID, "product_name")
     name_field.clear()
     context.driver.find_element(By.ID, "search-btn").click()
@@ -150,11 +160,13 @@ def then_not_see_text_in_results(context, text):
 
 @when('I press the "Like" button again')
 def when_press_like_again(context):
+    """Click the Like button."""
     context.driver.find_element(By.ID, "like-btn").click()
 
 
 @then('the product record has "{likes}" likes in the database')
 def then_product_likes_in_db(context, likes):
+    """Verify the product's likes count in the backend."""
     product_id = context.driver.find_element(By.ID, "product_id").get_attribute("value")
     base = f"{context.base_url}/products/{product_id}"
     resp = requests.get(base, timeout=30)
@@ -165,6 +177,7 @@ def then_product_likes_in_db(context, likes):
 
 @given("a product exists")
 def given_product_exists(context):
+    """Create a product via UI for update tests."""
     context.driver.get(context.base_url)
     context.driver.find_element(By.ID, "product_name").send_keys("Test Product")
     context.driver.find_element(By.ID, "product_description").send_keys("This is a test product for update")
@@ -178,6 +191,7 @@ def given_product_exists(context):
 
 @when('I change the Name and press "Update"')
 def when_update_product_name(context):
+    """Change the product name and update."""
     name_field = context.driver.find_element(By.ID, "product_name")
     name_field.clear()
     name_field.send_keys("Updated Product Name")
@@ -189,6 +203,7 @@ def when_update_product_name(context):
 
 @then("I should see updated values upon retrieval")
 def then_see_updated_values(context):
+    """Clear form, retrieve product by ID, and check updated values."""
     context.driver.find_element(By.ID, "clear-btn").click()
     id_field = context.driver.find_element(By.ID, "product_id")
     id_field.send_keys(context.product_id)
