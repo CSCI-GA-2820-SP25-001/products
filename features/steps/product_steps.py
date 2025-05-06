@@ -2,7 +2,7 @@
 # Copyright 2016, 2024 John J. Rofrano. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
+# You may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 # https://www.apache.org/licenses/LICENSE-2.0
@@ -13,268 +13,203 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ######################################################################
-"""
-Product Steps
+"""Step Definitions for Product.feature using behave and Selenium."""
 
-Steps file for Product.feature
-
-For information on Waiting until elements are present in the HTML see:
-    https://selenium-python.readthedocs.io/waits.html
-"""
+import time
+import re
 from http import HTTPStatus
 import requests
-import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 from behave import given, when, then
 
 
 @given("the following products")
-def step_impl(ctx):
-    """Clear DB then POST each table row as JSON."""
-    base = f"{ctx.base_url}/products"
-    
-    # wipe existing data (ignore 404)
+def given_the_following_products(context):
+    """Clear the database and create products from the table."""
+    base = f"{context.base_url}/products"
     for item in requests.get(base, timeout=30).json():
         requests.delete(f"{base}/{item['id']}", timeout=30)
-        
-    # create rows from the feature table
-    for row in ctx.table:
+    for row in context.table:
         payload = {
             "name": row["name"],
             "description": row["description"],
             "price": float(row["price"]),
             "likes": int(row["likes"]),
         }
-        ctx.resp = requests.post(base, json=payload, timeout=30)
-        assert ctx.resp.status_code == HTTPStatus.CREATED
+        context.resp = requests.post(base, json=payload, timeout=30)
+        assert context.resp.status_code == HTTPStatus.CREATED
 
 
 @when('I visit the "Home Page"')
-def step_impl(context):
-    """Make a call to the base URL"""
+def when_i_visit_home_page(context):
+    """Visit the application's home page."""
     context.driver.get(context.base_url)
-    # Uncomment the next line to take a screenshot of the web page
-    # context.driver.save_screenshot('home_page.png')
 
 
 @then('I should see "{text}" in the title')
-def step_impl(context, text):
-    """Check the document title for a text string"""
+def then_see_text_in_title(context, text):
+    """Check that the page title contains the given text."""
     assert text in context.driver.title
 
 
 @then('I should not see "{text}"')
-def step_impl(context, text):
-    """Check that a text string is not in the body"""
+def then_not_see_text(context, text):
+    """Ensure the given text is not present in the page."""
     assert text not in context.driver.page_source
 
 
 @when('I set the "{element_name}" to "{text_string}"')
-def step_impl(context, element_name, text_string):
-    """Set the value of an input field"""
-    element_id = element_name.lower().replace(' ', '_')
+def when_set_element_to_text(context, element_name, text_string):
+    """Fill a form input field with the given text."""
+    element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
     element.clear()
     element.send_keys(text_string)
 
 
 @when('I press the "{button}" button')
-def step_impl(context, button):
-    """Press a button with a specific ID"""
-    button_id = button.lower() + '-btn'
+def when_press_button(context, button):
+    """Click the specified button."""
+    button_id = button.lower() + "-btn"
     context.driver.find_element(By.ID, button_id).click()
 
 
 @then('I should see the message "{message}"')
-def step_impl(context, message):
-    """Check for a message in the flash area"""
-    # Check if the message contains a regex pattern (enclosed in square brackets)
-    import re
-    if '[' in message and ']' in message:
-        # This is a regex pattern
+def then_see_message(context, message):
+    """Check for a message in the flash message area (supports regex)."""
+    if "[" in message and "]" in message:
         element = WebDriverWait(context.driver, context.wait_seconds).until(
-            EC.presence_of_element_located((By.ID, 'flash_message'))
+            EC.presence_of_element_located((By.ID, "flash_message"))
         )
         pattern = re.compile(message)
         assert pattern.search(element.text)
     else:
-        # This is a literal string
         found = WebDriverWait(context.driver, context.wait_seconds).until(
-            EC.text_to_be_present_in_element(
-                (By.ID, 'flash_message'),
-                message
-            )
+            EC.text_to_be_present_in_element((By.ID, "flash_message"), message)
         )
         assert found
 
 
 @when('I copy the "{element_name}" field')
-def step_impl(context, element_name):
-    """Copy a field's value to the clipboard"""
-    element_id = element_name.lower().replace(' ', '_')
+def when_copy_field(context, element_name):
+    """Copy the value of the specified field into context.clipboard."""
+    element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
-    # Save the copied value for later use
-    context.clipboard = element.get_attribute('value')
+    context.clipboard = element.get_attribute("value")
 
 
 @when('I paste the "{element_name}" field')
-def step_impl(context, element_name):
-    """Paste a previously copied value into a field"""
-    element_id = element_name.lower().replace(' ', '_')
+def when_paste_field(context, element_name):
+    """Paste clipboard value into the specified input field."""
+    element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
     element.clear()
     element.send_keys(context.clipboard)
 
 
 @then('the "{element_name}" field should be empty')
-def step_impl(context, element_name):
-    """Check that a field is empty"""
-    element_id = element_name.lower().replace(' ', '_')
+def then_field_should_be_empty(context, element_name):
+    """Assert the specified field is empty."""
+    element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
-    assert element.get_attribute('value') == ""
+    assert element.get_attribute("value") == ""
 
 
 @then('I should see "{text_string}" in the "{element_name}" field')
-def step_impl(context, text_string, element_name):
-    """Check the value of an input field"""
-    element_id = element_name.lower().replace(' ', '_')
+def then_see_text_in_field(context, text_string, element_name):
+    """Check that the given field contains expected text."""
+    element_id = element_name.lower().replace(" ", "_")
     found = WebDriverWait(context.driver, context.wait_seconds).until(
         EC.text_to_be_present_in_element_value(
-            (By.ID, f"product_{element_id}"),
-            text_string
+            (By.ID, f"product_{element_id}"), text_string
         )
     )
     assert found
 
 
 @then('I should not see "{text_string}" in the "{element_name}" field')
-def step_impl(context, text_string, element_name):
-    """Check that a value is not in an input field"""
-    element_id = element_name.lower().replace(' ', '_')
+def then_not_see_text_in_field(context, text_string, element_name):
+    """Ensure the specified field does not contain given text."""
+    element_id = element_name.lower().replace(" ", "_")
     element = context.driver.find_element(By.ID, f"product_{element_id}")
-    value = element.get_attribute('value')
+    value = element.get_attribute("value")
     assert text_string not in value
 
 
 @then('I should see "{text}" in the results')
-def step_impl(context, text):
-    """Check for text in the search results"""
+def then_see_text_in_results(context, text):
+    """Check that search results include expected text."""
     found = WebDriverWait(context.driver, context.wait_seconds).until(
-        EC.text_to_be_present_in_element(
-            (By.ID, 'search_results'),
-            text
-        )
+        EC.text_to_be_present_in_element((By.ID, "search_results"), text)
     )
     assert found
 
 
 @then('I should not see "{text}" in the results')
-def step_impl(context, text):
-    """Check that text is not in the search results"""
-    # Clear the search field to ensure we get fresh results
-    name_field = context.driver.find_element(By.ID, 'product_name')
+def then_not_see_text_in_results(context, text):
+    """Ensure the search results do not contain given text."""
+    name_field = context.driver.find_element(By.ID, "product_name")
     name_field.clear()
-    
-    # Click search again to refresh the results
-    context.driver.find_element(By.ID, 'search-btn').click()
-    
-    # Wait for the search results to be updated
+    context.driver.find_element(By.ID, "search-btn").click()
     time.sleep(1)
-    
-    # Get the search results element
-    element = context.driver.find_element(By.ID, 'search_results')
-    
-    # Check that the text is not in the search results
+    element = context.driver.find_element(By.ID, "search_results")
     assert text not in element.text
 
 
 @when('I press the "Like" button again')
-def step_impl(context):
-    """Press the Like button again"""
-    context.driver.find_element(By.ID, 'like-btn').click()
+def when_press_like_again(context):
+    """Click the Like button."""
+    context.driver.find_element(By.ID, "like-btn").click()
 
 
 @then('the product record has "{likes}" likes in the database')
-def step_impl(context, likes):
-    """Check the number of likes in the database"""
-    product_id = context.driver.find_element(By.ID, 'product_id').get_attribute('value')
+def then_product_likes_in_db(context, likes):
+    """Verify the product's likes count in the backend."""
+    product_id = context.driver.find_element(By.ID, "product_id").get_attribute("value")
     base = f"{context.base_url}/products/{product_id}"
     resp = requests.get(base, timeout=30)
     assert resp.status_code == 200
     data = resp.json()
-    assert str(data['likes']) == likes
+    assert str(data["likes"]) == likes
 
 
-@given('a product exists')
-def step_impl(context):
-    """Create a product for testing update functionality"""
-    # Visit the home page
+@given("a product exists")
+def given_product_exists(context):
+    """Create a product via UI for update tests."""
     context.driver.get(context.base_url)
-    
-    # Set product details
-    context.driver.find_element(By.ID, 'product_name').send_keys("Test Product")
-    context.driver.find_element(By.ID, 'product_description').send_keys("This is a test product for update")
-    context.driver.find_element(By.ID, 'product_price').send_keys("99.99")
-    
-    # Create the product
-    context.driver.find_element(By.ID, 'create-btn').click()
-    
-    # Wait for success message
+    context.driver.find_element(By.ID, "product_name").send_keys("Test Product")
+    context.driver.find_element(By.ID, "product_description").send_keys("This is a test product for update")
+    context.driver.find_element(By.ID, "product_price").send_keys("99.99")
+    context.driver.find_element(By.ID, "create-btn").click()
     WebDriverWait(context.driver, context.wait_seconds).until(
-        EC.text_to_be_present_in_element(
-            (By.ID, 'flash_message'),
-            "Success"
-        )
+        EC.text_to_be_present_in_element((By.ID, "flash_message"), "Success")
     )
-    
-    # Save the product ID for later use
-    context.product_id = context.driver.find_element(By.ID, 'product_id').get_attribute('value')
+    context.product_id = context.driver.find_element(By.ID, "product_id").get_attribute("value")
 
 
 @when('I change the Name and press "Update"')
-def step_impl(context):
-    """Update the product name and press the update button"""
-    # Clear the name field and set a new name
-    name_field = context.driver.find_element(By.ID, 'product_name')
+def when_update_product_name(context):
+    """Change the product name and update."""
+    name_field = context.driver.find_element(By.ID, "product_name")
     name_field.clear()
     name_field.send_keys("Updated Product Name")
-    
-    # Press the update button
-    context.driver.find_element(By.ID, 'update-btn').click()
-    
-    # Wait for success message
+    context.driver.find_element(By.ID, "update-btn").click()
     WebDriverWait(context.driver, context.wait_seconds).until(
-        EC.text_to_be_present_in_element(
-            (By.ID, 'flash_message'),
-            "Success"
-        )
+        EC.text_to_be_present_in_element((By.ID, "flash_message"), "Success")
     )
 
 
-@then('I should see updated values upon retrieval')
-def step_impl(context):
-    """Verify the product was updated by retrieving it"""
-    # Clear the form
-    context.driver.find_element(By.ID, 'clear-btn').click()
-    
-    # Set the product ID
-    id_field = context.driver.find_element(By.ID, 'product_id')
+@then("I should see updated values upon retrieval")
+def then_see_updated_values(context):
+    """Clear form, retrieve product by ID, and check updated values."""
+    context.driver.find_element(By.ID, "clear-btn").click()
+    id_field = context.driver.find_element(By.ID, "product_id")
     id_field.send_keys(context.product_id)
-    
-    # Retrieve the product
-    context.driver.find_element(By.ID, 'retrieve-btn').click()
-    
-    # Wait for success message
+    context.driver.find_element(By.ID, "retrieve-btn").click()
     WebDriverWait(context.driver, context.wait_seconds).until(
-        EC.text_to_be_present_in_element(
-            (By.ID, 'flash_message'),
-            "Success"
-        )
+        EC.text_to_be_present_in_element((By.ID, "flash_message"), "Success")
     )
-    
-    # Verify the name was updated
-    name_field = context.driver.find_element(By.ID, 'product_name')
-    assert name_field.get_attribute('value') == "Updated Product Name"
+    name_field = context.driver.find_element(By.ID, "product_name")
+    assert name_field.get_attribute("value") == "Updated Product Name"

@@ -30,7 +30,7 @@ spec:
       Fully qualified container image name to be built by buildah.
     name: IMAGE
     type: string
-  - default: Dockerfile
+  - default: ./Dockerfile
     description: |
       Path to the `Dockerfile` (or `Containerfile`) relative to the `source` workspace.
     name: DOCKERFILE
