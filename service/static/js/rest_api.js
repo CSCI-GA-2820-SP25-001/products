@@ -11,14 +11,17 @@ $(function () {
         $("#product_description").val(res.description);
         $("#product_price").val(res.price);
         $("#product_likes").val(res.likes);
+        $("#live-btn").prop("disabled", false);
     }
 
-    /// Clears all form fields
+    // Clears all form fields
     function clear_form_data() {
+        $("#product_id").val("");
         $("#product_name").val("");
         $("#product_description").val("");
         $("#product_price").val("");
         $("#product_likes").val("");
+        $("#live-btn").prop("disabled", true);
     }
 
     // Updates the flash message area
@@ -32,19 +35,17 @@ $(function () {
     // ****************************************
 
     $("#create-btn").click(function () {
-
         let name = $("#product_name").val();
         let description = $("#product_description").val();
         let price = $("#product_price").val();
         let likes = parseInt($("#product_likes").val()) || 0;
 
         let data = {
-            "name": name,
-            "description": description,
-            "price": price,
-            "likes": likes
+            name: name,
+            description: description,
+            price: price,
+            likes: likes
         };
-
 
         $("#flash_message").empty();
         
@@ -79,10 +80,10 @@ $(function () {
         let likes = parseInt($("#product_likes").val()) || 0;
 
         let data = {
-            "name": name,
-            "description": description,
-            "price": price,
-            "likes": likes
+            name: name,
+            description: description,
+            price: price,
+            likes: likes
         };
 
         $("#flash_message").empty();
@@ -159,6 +160,33 @@ $(function () {
 
         ajax.fail(function(res){
             flash_message("Server error!")
+        });
+    });
+
+    // ****************************************
+    // Like a Product
+    // ****************************************
+
+    $("#like-btn").click(function () {
+
+        let product_id = $("#product_id").val();
+
+        $("#flash_message").empty();
+
+        let ajax = $.ajax({
+            type: "PUT",
+            url: `/products/${product_id}/like`,
+            contentType: "application/json",
+            data: '',
+        })
+
+        ajax.done(function(res){
+            update_form_data(res)
+            flash_message("Product liked")
+        });
+
+        ajax.fail(function(res){
+            flash_message(res.responseJSON.message)
         });
     });
 

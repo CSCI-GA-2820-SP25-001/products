@@ -40,6 +40,14 @@ test: ## Run the unit tests
 	$(info Running tests...)
 	export RETRY_COUNT=1; pytest --pspec --cov=service --cov-fail-under=95 --disable-warnings
 
+.PHONY: behave
+behave: ## Run the BDD tests
+	$(info Running behave tests...)
+	honcho start &
+	sleep 5
+	behave
+	pkill -f "python -m flask run"
+
 .PHONY: run
 run: ## Run the service
 	$(info Starting service...)

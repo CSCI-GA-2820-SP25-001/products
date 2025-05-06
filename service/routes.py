@@ -46,85 +46,129 @@ def index():
 ######################################################################
 @app.route("/products", methods=["POST"])
 def create_product():
-    """
-    Create a Product
-    This endpoint will create a Product based on the data in the body that is posted
-    """
-    app.logger.info("Request to Create a Product...")
+    """Create a product"""
+    app.logger.info("Request to create a product")
     check_content_type("application/json")
 
     product = Product()
-    # Get the data from the request and deserialize it
-    data = request.get_json()
-    app.logger.info("Processing: %s", data)
-    product.deserialize(data)
-
-    # Save the new Product to the database
+    product.deserialize(request.get_json())
     product.create()
-    app.logger.info("Product with new id [%s] saved!", product.id)
 
-    # Return the location of the new Product
+    message = product.serialize()
     location_url = url_for("get_product", product_id=product.id, _external=True)
 
-    return (
-        jsonify(product.serialize()),
-        status.HTTP_201_CREATED,
-        {"Location": location_url},
+    app.logger.info("Product with ID [%s] created.", product.id)
+    return jsonify(message), status.HTTP_201_CREATED, {"Location": location_url}
+
+
+######################################################################
+# Helper functions for list_products
+######################################################################
+def parse_query_parameter(param_value, convert_func, error_msg):
+    """Parse and convert a query parameter"""
+    if not param_value:
+        return None
+
+    try:
+        return convert_func(param_value)
+    except ValueError:
+        abort(status.HTTP_400_BAD_REQUEST, error_msg)
+
+
+def find_products_by_query_params(product_id, name, description, price, price_lt):
+    """Find products based on query parameters"""
+    if product_id or name or description or price:
+        return Product.find_by_attributes(
+            product_id=product_id,
+            name=name,
+            description=description,
+            price=price
+        )
+    if price_lt:
+        return Product.query.filter(Product.price < price_lt).all()
+    return Product.all()
+
+
+######################################################################
+# LIST ALL PRODUCTS
+######################################################################
+@app.route("/products", methods=["GET"])
+def list_products():
+    """Returns all of the Products"""
+    app.logger.info("Request for product list")
+
+    # Process query parameters
+    product_id = parse_query_parameter(
+        request.args.get("id"),
+        int,
+        "Invalid product ID format"
     )
 
+    price = parse_query_parameter(
+        request.args.get("price"),
+        float,
+        "Invalid price format"
+    )
 
-######################################################################
-# UPDATE A PRODUCT
-######################################################################
-@app.route("/products/<int:product_id>", methods=["PUT"])
-def update_product(product_id):
-    """
-    Update a Product
+    price_lt = parse_query_parameter(
+        request.args.get("price_lt"),
+        float,
+        "Invalid price_lt format"
+    )
 
-    This endpoint will update a Product based the body that is posted
-    """
-    app.logger.info("Request to Update a product with id [%s]", product_id)
-    check_content_type("application/json")
+    name = request.args.get("name")
+    description = request.args.get("description")
 
-    # Attempt to find the Product and abort if not found
-    product = Product.find(product_id)
-    if not product:
-        abort(
-            status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found."
-        )
+    # Find products by the provided attributes
+    products = find_products_by_query_params(
+        product_id, name, description, price, price_lt
+    )
 
-    # Update the Product with the new data
-    data = request.get_json()
-    app.logger.info("Processing: %s", data)
-    product.deserialize(data)
-
-    # Save the updates to the database
-    product.update()
-
-    app.logger.info("Product with ID: %d updated.", product.id)
-    return jsonify(product.serialize()), status.HTTP_200_OK
+    results = [product.serialize() for product in products]
+    app.logger.info("Returning %d products", len(results))
+    return jsonify(results), status.HTTP_200_OK
 
 
 ######################################################################
-# READ A PRODUCT
+# RETRIEVE A PRODUCT
 ######################################################################
 @app.route("/products/<int:product_id>", methods=["GET"])
 def get_product(product_id):
     """
     Retrieve a single Product
-
-    This endpoint will return a Product based on it's id
+    This endpoint will return a Product based on its id
     """
-    app.logger.info("Request to Retrieve a product with id [%s]", product_id)
+    app.logger.info("Request for product with id: %s", product_id)
 
-    # Attempt to find the Product and abort if not found
     product = Product.find(product_id)
     if not product:
-        abort(
-            status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found."
-        )
+        abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
 
     app.logger.info("Returning product: %s", product.name)
+    return jsonify(product.serialize()), status.HTTP_200_OK
+
+
+######################################################################
+# UPDATE AN EXISTING PRODUCT
+######################################################################
+@app.route("/products/<int:product_id>", methods=["PUT"])
+def update_product(product_id):
+    """
+    Update a Product
+    This endpoint will update a Product based on the body that is posted
+    """
+    app.logger.info("Request to update product with id: %s", product_id)
+    check_content_type("application/json")
+
+    product = Product.find(product_id)
+    if not product:
+        abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
+
+    product.deserialize(request.get_json())
+    product.id = product_id
+    product.update()
+
+    app.logger.info("Product with ID [%s] updated.", product.id)
     return jsonify(product.serialize()), status.HTTP_200_OK
 
 
@@ -132,97 +176,19 @@ def get_product(product_id):
 # DELETE A PRODUCT
 ######################################################################
 @app.route("/products/<int:product_id>", methods=["DELETE"])
-def delete_products(product_id):
+def delete_product(product_id):
     """
     Delete a Product
-
-    This endpoint will delete a Product based the id specified in the path
+    This endpoint will delete a Product based on the id specified in the path
     """
-    app.logger.info("Request to Delete a product with id [%s]", product_id)
+    app.logger.info("Request to delete product with id: %s", product_id)
 
-    # Delete the Product if it exists
     product = Product.find(product_id)
     if product:
-        app.logger.info("Product with ID: %d found.", product.id)
         product.delete()
 
-    app.logger.info("Product with ID: %d delete complete.", product_id)
-    return {}, status.HTTP_204_NO_CONTENT
-
-
-######################################################################
-# LIST ALL PRODUCTS
-######################################################################
-def _apply_query_filters(query):
-    """Applies query filters based on request args"""
-    filters = [
-        _filter_by_id,
-        _filter_by_name,
-        _filter_by_description,
-        _filter_by_price,
-        _filter_by_price_lt,
-    ]
-    for f in filters:
-        query = f(query)
-    return query
-
-
-def _filter_by_id(query):
-    product_id = request.args.get("id")
-    if product_id is not None:
-        try:
-            product_id = int(product_id)
-            query = query.filter(Product.id == product_id)
-        except ValueError:
-            abort(status.HTTP_400_BAD_REQUEST, "ID must be an integer.")
-    return query
-
-
-def _filter_by_name(query):
-    name = request.args.get("name")
-    if name:
-        query = query.filter(Product.name.ilike(f"%{name}%"))
-    return query
-
-
-def _filter_by_description(query):
-    description = request.args.get("description")
-    if description:
-        query = query.filter(Product.description.ilike(f"%{description}%"))
-    return query
-
-
-def _filter_by_price(query):
-    price = request.args.get("price")
-    if price is not None:
-        try:
-            price = float(price)
-            query = query.filter(Product.price == price)
-        except ValueError:
-            abort(status.HTTP_400_BAD_REQUEST, "Price must be a number.")
-    return query
-
-
-def _filter_by_price_lt(query):
-    price_lt = request.args.get("price_lt")
-    if price_lt is not None:
-        try:
-            price_lt = float(price_lt)
-            query = query.filter(Product.price < price_lt)
-        except ValueError:
-            abort(status.HTTP_400_BAD_REQUEST, "price_lt must be a number.")
-    return query
-
-
-@app.route("/products", methods=["GET"])
-def list_products():
-    """Returns a list of Products with optional query parameters"""
-    app.logger.info("Request for product list")
-    query = Product.query
-    query = _apply_query_filters(query)
-    products = query.all()
-    results = [product.serialize() for product in products]
-    return jsonify(results), status.HTTP_200_OK
+    app.logger.info("Product with ID [%s] delete complete.", product_id)
+    return "", status.HTTP_204_NO_CONTENT
 
 
 ######################################################################
@@ -230,56 +196,42 @@ def list_products():
 ######################################################################
 @app.route("/products/<int:product_id>/like", methods=["PUT"])
 def like_product(product_id):
-    """Like a product (increment the likes count)"""
-    app.logger.info("Request to like product with id: %d", product_id)
+    """
+    Like a Product
+    This endpoint will increment the like count of a product
+    """
+    app.logger.info("Request to like product with id: %s", product_id)
+
     product = Product.find(product_id)
     if not product:
-        abort(
-            status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found."
-        )
+        abort(status.HTTP_404_NOT_FOUND, f"Product with id '{product_id}' was not found.")
 
     product.likes += 1
     product.update()
 
-    app.logger.info("Product with ID: %d has now %d likes.", product.id, product.likes)
+    app.logger.info("Product with ID [%s] liked.", product.id)
     return jsonify(product.serialize()), status.HTTP_200_OK
 
 
 ######################################################################
-# CHECK HEALTH
+# HEALTH ENDPOINT
 ######################################################################
 @app.route("/products/health", methods=["GET"])
-def health_check():
-    """Health check endpoint"""
-    return jsonify(status="OK"), status.HTTP_200_OK
+def health():
+    """Health Status"""
+    return jsonify({"status": "OK"}), status.HTTP_200_OK
 
 
 ######################################################################
-#  U T I L I T Y   F U N C T I O N S
+# UTILITY FUNCTIONS
 ######################################################################
-def error(status_code, reason):
-    """Logs the error and then aborts"""
-    app.logger.error(reason)
-    abort(status_code, reason)
-
-
-######################################################################
-# Checks the ContentType of a request
-######################################################################
-def check_content_type(content_type) -> None:
+def check_content_type(content_type):
     """Checks that the media type is correct"""
     if "Content-Type" not in request.headers:
-        app.logger.error("No Content-Type specified.")
+        abort(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Content-Type must be set")
+
+    if request.headers["Content-Type"] != content_type:
         abort(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             f"Content-Type must be {content_type}",
         )
-
-    if request.headers["Content-Type"] == content_type:
-        return
-
-    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
-    abort(
-        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-        f"Content-Type must be {content_type}",
-    )

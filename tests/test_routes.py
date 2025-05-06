@@ -71,18 +71,18 @@ class TestProductService(TestCase):
         db.session.remove()
 
     # def test_query_products_by_category(self):
-    # """It should Query Products by Category"""
-    # product1 = ProductFactory(category="Electronics")
-    # product2 = ProductFactory(category="Clothing")
-    # self.client.post(BASE_URL, json=product1.serialize())
-    # self.client.post(BASE_URL, json=product2.serialize())
+    #     """It should Query Products by Category"""
+    #     product1 = ProductFactory(category="Electronics")
+    #     product2 = ProductFactory(category="Clothing")
+    #     self.client.post(BASE_URL, json=product1.serialize())
+    #     self.client.post(BASE_URL, json=product2.serialize())
 
-    # response = self.client.get(BASE_URL, query_string="category=Electronics")
-    # self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     response = self.client.get(BASE_URL, query_string="category=Electronics")
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # data = response.get_json()
-    # self.assertEqual(len(data), 1)
-    # self.assertEqual(data[0]["category"], "Electronics")
+    #     data = response.get_json()
+    #     self.assertEqual(len(data), 1)
+    #     self.assertEqual(data[0]["category"], "Electronics")
 
     def test_query_products_by_name(self):
         """It should Query Products by Name"""
@@ -121,15 +121,15 @@ class TestProductService(TestCase):
         self.assertEqual(float(data[0]["price"]), 50.0)  # Check that it's the cheap one
 
     # def test_query_products_no_matches(self):
-    # """It should return an empty list if no products match"""
-    # product = ProductFactory(category="Books")
-    # self.client.post(BASE_URL, json=product.serialize())
+    #     """It should return an empty list if no products match"""
+    #     product = ProductFactory(category="Books")
+    #     self.client.post(BASE_URL, json=product.serialize())
 
-    # response = self.client.get(BASE_URL, query_string="category=Electronics")
-    # self.assertEqual(response.status_code, status.HTTP_200_OK)
+    #     response = self.client.get(BASE_URL, query_string="category=Electronics")
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # data = response.get_json()
-    # self.assertEqual(data, [])
+    #     data = response.get_json()
+    #     self.assertEqual(data, [])
 
     def test_query_products(self):
         """It should Query Products by attributes"""
@@ -415,7 +415,7 @@ class TestProductService(TestCase):
         self.assertGreaterEqual(len(data), 1)
         self.assertEqual(data[0]["description"], description)
 
-    def test_get_product_list_by_category(self):
+    def test_get_product_list_by_price(self):
         """It should Get a list of Products by price"""
         products = self._create_products(5)
         price = products[0].price
