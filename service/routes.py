@@ -216,7 +216,7 @@ def like_product(product_id):
 ######################################################################
 # HEALTH ENDPOINT
 ######################################################################
-@app.route("/products/health", methods=["GET"])
+@app.route("/health", methods=["GET"])
 def health():
     """Health Status"""
     return jsonify({"status": "OK"}), status.HTTP_200_OK
