@@ -68,6 +68,9 @@ honcho start  # Start server in one terminal
 behave        # Run tests in another terminal
 ```
 
+### Codecov
+![codecov](screenshots/codecov.png)
+
 ---
 
 ## 📘 API Endpoints
